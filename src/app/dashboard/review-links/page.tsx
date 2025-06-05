@@ -34,7 +34,10 @@ export default async function ReviewLinksPage() {
     <SubscriptionCheck>
       <DashboardNavbar />
       <div className="flex h-screen bg-gray-50">
-        <DashboardSidebar />
+        {/* Desktop Sidebar - Hidden on mobile */}
+        <div className="hidden md:block">
+          <DashboardSidebar />
+        </div>
         <main className="flex-1 overflow-auto">
           <div className="container mx-auto px-6 py-8">
             {/* Header Section */}
