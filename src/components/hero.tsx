@@ -11,7 +11,7 @@ export default function Hero() {
         <div className="container mx-auto px-4">
           <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 mb-8 tracking-tight">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0fb0f0] to-black">
                 Revi
               </span>{" "}
               - Get More Reviews With Voice
@@ -26,7 +26,7 @@ export default function Hero() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
                 href="/dashboard"
-                className="inline-flex items-center px-8 py-4 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors text-lg font-medium"
+                className="inline-flex items-center px-8 py-4 text-white bg-custom-blue rounded-lg hover:bg-gradient-to-r hover:from-custom-blue hover:to-black transition-colors text-lg font-medium"
               >
                 Create Review Links
                 <ArrowUpRight className="ml-2 w-5 h-5" />
@@ -42,28 +42,28 @@ export default function Hero() {
 
             <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 text-sm text-gray-600 max-w-4xl mx-auto">
               <div className="flex flex-col items-center gap-2 p-4 rounded-lg bg-white shadow-sm">
-                <Mic className="w-8 h-8 text-blue-500" />
+                <Mic className="w-8 h-8 text-custom-blue" />
                 <span className="font-medium">Voice Recording</span>
                 <span className="text-xs text-center">
                   Simple interface for customers to record feedback
                 </span>
               </div>
               <div className="flex flex-col items-center gap-2 p-4 rounded-lg bg-white shadow-sm">
-                <Star className="w-8 h-8 text-blue-500" />
+                <Star className="w-8 h-8 text-custom-blue" />
                 <span className="font-medium">AI Transcription</span>
                 <span className="text-xs text-center">
                   Automatically convert voice to optimized text
                 </span>
               </div>
               <div className="flex flex-col items-center gap-2 p-4 rounded-lg bg-white shadow-sm">
-                <Share2 className="w-8 h-8 text-blue-500" />
+                <Share2 className="w-8 h-8 text-custom-blue" />
                 <span className="font-medium">Multi-Platform</span>
                 <span className="text-xs text-center">
                   Share to Google, Facebook, and Instagram
                 </span>
               </div>
               <div className="flex flex-col items-center gap-2 p-4 rounded-lg bg-white shadow-sm">
-                <BarChart className="w-8 h-8 text-blue-500" />
+                <BarChart className="w-8 h-8 text-custom-blue" />
                 <span className="font-medium">Analytics</span>
                 <span className="text-xs text-center">
                   Track performance of technician review links

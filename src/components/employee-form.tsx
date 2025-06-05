@@ -153,8 +153,8 @@ export default function EmployeeForm({ employees, userId }: EmployeeFormProps) {
                   className="flex items-center justify-between p-4 border rounded-lg bg-card hover:shadow-sm transition-shadow"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="bg-primary/10 p-2 rounded-full">
-                      <User className="h-4 w-4 text-primary" />
+                    <div className="bg-custom-blue/10 p-2 rounded-full">
+                      <User className="h-4 w-4 text-custom-blue" />
                     </div>
                     <div>
                       <div className="font-medium">{employee.name}</div>

@@ -42,8 +42,8 @@ export default async function Home() {
 
           <div className="grid md:grid-cols-3 gap-12 max-w-5xl mx-auto">
             <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-6">
-                <Link className="w-8 h-8 text-blue-600" />
+              <div className="w-16 h-16 bg-custom-blue/10 rounded-full flex items-center justify-center mb-6">
+                <Link className="w-8 h-8 text-custom-blue" />
               </div>
               <h3 className="text-xl font-semibold mb-3">
                 1. Create Review Links
@@ -54,8 +54,8 @@ export default async function Home() {
               </p>
             </div>
             <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-6">
-                <Mic className="w-8 h-8 text-blue-600" />
+              <div className="w-16 h-16 bg-custom-blue/10 rounded-full flex items-center justify-center mb-6">
+                <Mic className="w-8 h-8 text-custom-blue" />
               </div>
               <h3 className="text-xl font-semibold mb-3">
                 2. Collect Voice Reviews
@@ -66,8 +66,8 @@ export default async function Home() {
               </p>
             </div>
             <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-6">
-                <Share2 className="w-8 h-8 text-blue-600" />
+              <div className="w-16 h-16 bg-custom-blue/10 rounded-full flex items-center justify-center mb-6">
+                <Share2 className="w-8 h-8 text-custom-blue" />
               </div>
               <h3 className="text-xl font-semibold mb-3">
                 3. Share Everywhere
@@ -134,7 +134,7 @@ export default async function Home() {
                 key={index}
                 className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
               >
-                <div className="text-blue-600 mb-4">{feature.icon}</div>
+                <div className="text-custom-blue mb-4">{feature.icon}</div>
                 <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
                 <p className="text-gray-600">{feature.description}</p>
               </div>
@@ -230,18 +230,18 @@ export default async function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-blue-600 text-white">
+      <section className="py-20 bg-gradient-to-r from-custom-blue to-black text-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">
             Ready to Transform Your Review Process?
           </h2>
-          <p className="text-blue-100 mb-8 max-w-2xl mx-auto">
+          <p className="text-white/80 mb-8 max-w-2xl mx-auto">
             Join service businesses that are collecting more authentic reviews
             with less effort.
           </p>
           <a
             href="/dashboard"
-            className="inline-flex items-center px-8 py-4 text-blue-600 bg-white rounded-lg hover:bg-gray-100 transition-colors font-medium"
+            className="inline-flex items-center px-8 py-4 text-custom-blue bg-white rounded-lg hover:bg-gray-100 transition-colors font-medium"
           >
             Create Your First Review Link
             <ArrowUpRight className="ml-2 w-5 h-5" />

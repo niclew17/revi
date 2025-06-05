@@ -24,7 +24,7 @@ export default async function Pricing() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto justify-center">
+        <div className="flex flex-wrap justify-center gap-8 max-w-7xl mx-auto">
           {plans?.map((item: any) => (
             <PricingCard key={item.id} item={item} user={user} />
           ))}

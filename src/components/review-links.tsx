@@ -77,8 +77,8 @@ export default function ReviewLinks({ employees }: ReviewLinksProps) {
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3 flex-1">
-                      <div className="bg-primary/10 p-2 rounded-full">
-                        <User className="h-4 w-4 text-primary" />
+                      <div className="bg-custom-blue/10 p-2 rounded-full">
+                        <User className="h-4 w-4 text-custom-blue" />
                       </div>
                       <div className="flex-1">
                         <div className="font-medium">{employee.name}</div>
