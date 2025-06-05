@@ -102,8 +102,14 @@ export default function PricingCard({
             if (item.id === "free-tier") {
               window.location.href = "/dashboard";
             } else {
-              // Use the price ID from the item object
-              await handleCheckout(item.price || item.id);
+              // Check if user is signed in
+              if (!user) {
+                // Redirect to sign-in page with return URL to pricing page
+                window.location.href = `/sign-in?redirect=${encodeURIComponent(window.location.pathname)}`;
+              } else {
+                // Use the price ID from the item object
+                await handleCheckout(item.price || item.id);
+              }
             }
           }}
           className={`w-full py-6 text-lg font-medium`}

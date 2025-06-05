@@ -31,14 +31,16 @@ export default function DashboardNavbar() {
               className="h-8 w-auto"
             />
           </Link>
-          <div className="hidden md:flex items-center space-x-4 ml-6">
-            <Link
-              href="/dashboard"
-              className={`text-sm font-medium ${pathname === "/dashboard" ? "text-custom-blue" : "text-muted-foreground hover:text-custom-blue"}`}
-            >
-              Dashboard
-            </Link>
-          </div>
+          {!pathname.startsWith("/dashboard") && (
+            <div className="hidden md:flex items-center space-x-4 ml-6">
+              <Link
+                href="/dashboard"
+                className="text-sm font-medium text-muted-foreground hover:text-custom-blue"
+              >
+                Dashboard
+              </Link>
+            </div>
+          )}
         </div>
         <div className="flex gap-4 items-center">
           <DropdownMenu>

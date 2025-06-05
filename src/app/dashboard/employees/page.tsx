@@ -1,15 +1,15 @@
 import DashboardNavbar from "@/components/dashboard-navbar";
 import DashboardSidebar from "@/components/dashboard-sidebar";
-import { createClient } from "../../../supabase/server";
+import { createClient } from "../../../../supabase/server";
 import { redirect } from "next/navigation";
 import { SubscriptionCheck } from "@/components/subscription-check";
-import CompanyForm from "@/components/company-form";
+import EmployeeForm from "@/components/employee-form";
 
 import Link from "next/link";
-import { checkUserSubscription } from "../actions";
-import { InfoIcon, UserCircle } from "lucide-react";
+import { checkUserSubscription } from "../../actions";
+import { InfoIcon } from "lucide-react";
 
-export default async function Dashboard() {
+export default async function EmployeesPage() {
   const supabase = await createClient();
 
   const {
@@ -23,12 +23,12 @@ export default async function Dashboard() {
   // Check subscription status but don't redirect
   const isSubscribed = await checkUserSubscription(user?.id!);
 
-  // Fetch company information if it exists
-  const { data: companyData } = await supabase
-    .from("company_info")
+  // Fetch employees
+  const { data: employees } = await supabase
+    .from("employees")
     .select("*")
     .eq("user_id", user.id)
-    .single();
+    .order("created_at", { ascending: true });
 
   return (
     <SubscriptionCheck>
@@ -39,7 +39,7 @@ export default async function Dashboard() {
           <div className="container mx-auto px-6 py-8">
             {/* Header Section */}
             <header className="mb-8">
-              <h1 className="text-3xl font-bold mb-4">Company Information</h1>
+              <h1 className="text-3xl font-bold mb-4">Employees</h1>
 
               {!isSubscribed && (
                 <div className="bg-yellow-100 border border-yellow-300 text-yellow-800 p-4 rounded-lg flex items-center gap-3">
@@ -61,24 +61,8 @@ export default async function Dashboard() {
               )}
             </header>
 
-            {/* Company Form */}
-            <CompanyForm companyInfo={companyData || null} userId={user.id} />
-
-            {/* User Profile Section */}
-            <section className="bg-card rounded-xl p-6 border shadow-sm mt-8">
-              <div className="flex items-center gap-4 mb-6">
-                <UserCircle size={48} className="text-primary" />
-                <div>
-                  <h2 className="font-semibold text-xl">User Profile</h2>
-                  <p className="text-sm text-muted-foreground">{user.email}</p>
-                </div>
-              </div>
-              <div className="bg-muted/50 rounded-lg p-4 overflow-hidden">
-                <pre className="text-xs font-mono max-h-48 overflow-auto">
-                  {JSON.stringify(user, null, 2)}
-                </pre>
-              </div>
-            </section>
+            {/* Employee Form */}
+            <EmployeeForm employees={employees || []} userId={user.id} />
           </div>
         </main>
       </div>
