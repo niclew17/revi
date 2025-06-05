@@ -29,19 +29,34 @@ serve(async (req) => {
       amount: 0,
       interval: "month",
       currency: "usd",
-      features: ["Up to 10 reviews", "1 seat"],
+      features: ["1 employee", "10 free reviews"],
       popular: false,
     };
 
     // Modify existing plans to add features and mark business tier
     const modifiedPlans = plans.data.map((plan) => {
-      // Assuming $10/month plan is the business tier
-      if (plan.amount === 1000) {
+      // Assuming $30/month plan is the business tier
+      if (plan.amount === 3000) {
         return {
           ...plan,
           name: "Business",
-          features: ["Up to 500 reviews per month", "10 seats"],
+          features: ["Up to 10 employees", "100 reviews per month"],
           popular: true,
+          price: plan.id, // Store the actual price ID for Stripe checkout
+        };
+      }
+      // Check for Enterprise tier (assuming $100/month)
+      if (plan.amount >= 10000) {
+        return {
+          ...plan,
+          name: "Enterprise",
+          features: [
+            "Up to 50 employees",
+            "Unlimited reviews",
+            "Priority support",
+            "Custom integrations",
+          ],
+          popular: false,
           price: plan.id, // Store the actual price ID for Stripe checkout
         };
       }
@@ -51,8 +66,11 @@ serve(async (req) => {
       };
     });
 
-    // Combine free tier with modified plans
-    const allPlans = [freeTier, ...modifiedPlans];
+    // Sort plans by amount to ensure proper order: Free (0), Business (3000), Enterprise (10000+)
+    const sortedPlans = modifiedPlans.sort((a, b) => a.amount - b.amount);
+
+    // Combine free tier with sorted plans
+    const allPlans = [freeTier, ...sortedPlans];
 
     return new Response(JSON.stringify(allPlans), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
