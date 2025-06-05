@@ -30,6 +30,7 @@ export const signUpAction = async (formData: FormData) => {
         full_name: fullName,
         email: email,
       },
+      emailRedirectTo: "/auth/callback",
     },
   });
 
@@ -39,7 +40,7 @@ export const signUpAction = async (formData: FormData) => {
 
   if (user) {
     try {
-      const { error: updateError } = await supabase.from("users").insert({
+      const { error: insertError } = await supabase.from("users").insert({
         id: user.id,
         user_id: user.id,
         name: fullName,
@@ -48,20 +49,18 @@ export const signUpAction = async (formData: FormData) => {
         created_at: new Date().toISOString(),
       });
 
-      if (updateError) {
-        // Error handling without console.error
+      if (insertError) {
         return encodedRedirect(
           "error",
           "/sign-up",
-          "Error updating user. Please try again.",
+          `Error creating user profile: ${insertError.message}`,
         );
       }
     } catch (err) {
-      // Error handling without console.error
       return encodedRedirect(
         "error",
         "/sign-up",
-        "Error updating user. Please try again.",
+        "Error creating user profile. Please try again.",
       );
     }
   }

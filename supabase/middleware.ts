@@ -26,21 +26,19 @@ export const updateSession = async (request: NextRequest) => {
           setAll(cookiesToSet) {
             cookiesToSet.forEach(({ name, value, options }) => {
               request.cookies.set(name, value);
-              response = NextResponse.next({
-                request: {
-                  headers: request.headers,
-                },
-              });
               response.cookies.set(name, value, options);
             });
           },
         },
-      }
+      },
     );
 
     // This will refresh session if expired - required for Server Components
     // https://supabase.com/docs/guides/auth/server-side/nextjs
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
 
     // protected routes
     if (request.nextUrl.pathname.startsWith("/dashboard") && error) {
