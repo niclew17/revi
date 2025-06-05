@@ -180,6 +180,34 @@ export const checkUserSubscription = async (userId: string) => {
   return !!subscription;
 };
 
+export const getUserEmployeeLimit = async (userId: string) => {
+  const supabase = await createClient();
+
+  const { data: subscription, error } = await supabase
+    .from("subscriptions")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .single();
+
+  if (error || !subscription) {
+    // Free plan: 1 employee
+    return 1;
+  }
+
+  // Check subscription amount to determine plan
+  if (subscription.amount === 3000) {
+    // Business plan: 10 employees
+    return 10;
+  } else if (subscription.amount >= 10000) {
+    // Enterprise plan: 50 employees
+    return 50;
+  }
+
+  // Default to free plan limit
+  return 1;
+};
+
 type CompanyInfoInput = {
   userId: string;
   companyName: string;
@@ -252,6 +280,22 @@ export const addEmployee = async (input: EmployeeInput) => {
   try {
     const supabase = await createClient();
     const { userId, name, position } = input;
+
+    // Check current employee count and limit
+    const { data: currentEmployees } = await supabase
+      .from("employees")
+      .select("id")
+      .eq("user_id", userId);
+
+    const currentCount = currentEmployees?.length || 0;
+    const employeeLimit = await getUserEmployeeLimit(userId);
+
+    if (currentCount >= employeeLimit) {
+      throw new Error(
+        `You have reached your employee limit of ${employeeLimit}. Please upgrade your plan to add more employees.`,
+      );
+    }
+
     const uniqueLinkId = uuidv4();
 
     const { data, error } = await supabase

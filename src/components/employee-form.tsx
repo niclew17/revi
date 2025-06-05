@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
-import { PlusCircle, Trash2, User } from "lucide-react";
+import { PlusCircle, Trash2, User, InfoIcon } from "lucide-react";
 import { addEmployee, deleteEmployee } from "@/app/actions";
 import { useToast } from "./ui/use-toast";
 
@@ -27,14 +27,28 @@ export type Employee = {
 interface EmployeeFormProps {
   employees: Employee[];
   userId: string;
+  employeeLimit: number;
+  isSubscribed: boolean;
 }
 
-export default function EmployeeForm({ employees, userId }: EmployeeFormProps) {
+export default function EmployeeForm({
+  employees,
+  userId,
+  employeeLimit,
+  isSubscribed,
+}: EmployeeFormProps) {
   const { toast } = useToast();
   const [newEmployeeName, setNewEmployeeName] = useState("");
   const [newEmployeePosition, setNewEmployeePosition] = useState("");
   const [employeesList, setEmployeesList] = useState<Employee[]>(employees);
   const [isLoading, setIsLoading] = useState(false);
+
+  const isAtLimit = employeesList.length >= employeeLimit;
+  const planName = !isSubscribed
+    ? "Free"
+    : employeeLimit === 10
+      ? "Business"
+      : "Enterprise";
 
   const handleAddEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,14 +105,46 @@ export default function EmployeeForm({ employees, userId }: EmployeeFormProps) {
         <CardTitle>Manage Employees</CardTitle>
         <CardDescription>
           Add employees and their positions to generate unique review links for
-          each one
+          each one. Your {planName} plan allows up to {employeeLimit} employee
+          {employeeLimit === 1 ? "" : "s"}.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Add Employee Form */}
+        {isAtLimit && (
+          <div className="bg-orange-100 border border-orange-300 text-orange-800 p-4 rounded-lg flex items-center gap-3">
+            <InfoIcon size="18" />
+            <div>
+              <p className="font-medium">Employee Limit Reached</p>
+              <p className="text-sm">
+                You've reached your {planName} plan limit of {employeeLimit}{" "}
+                employee{employeeLimit === 1 ? "" : "s"}.
+                {!isSubscribed && (
+                  <>
+                    {" "}
+                    <a href="/pricing" className="underline">
+                      Upgrade your plan
+                    </a>{" "}
+                    to add more employees.
+                  </>
+                )}
+                {isSubscribed && employeeLimit < 50 && (
+                  <>
+                    {" "}
+                    <a href="/pricing" className="underline">
+                      Upgrade to Enterprise
+                    </a>{" "}
+                    to add more employees.
+                  </>
+                )}
+              </p>
+            </div>
+          </div>
+        )}
+
         <form
           onSubmit={handleAddEmployee}
-          className="space-y-4 p-4 border rounded-lg bg-muted/50"
+          className={`space-y-4 p-4 border rounded-lg ${isAtLimit ? "bg-muted/30 opacity-60" : "bg-muted/50"}`}
         >
           <h3 className="font-medium">Add New Employee</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -110,6 +156,7 @@ export default function EmployeeForm({ employees, userId }: EmployeeFormProps) {
                 onChange={(e) => setNewEmployeeName(e.target.value)}
                 placeholder="John Doe"
                 required
+                disabled={isAtLimit}
               />
             </div>
             <div className="space-y-2">
@@ -119,23 +166,28 @@ export default function EmployeeForm({ employees, userId }: EmployeeFormProps) {
                 value={newEmployeePosition}
                 onChange={(e) => setNewEmployeePosition(e.target.value)}
                 placeholder="Service Technician"
+                disabled={isAtLimit}
               />
             </div>
           </div>
           <Button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || isAtLimit}
             className="w-full md:w-auto"
           >
             <PlusCircle className="h-4 w-4 mr-2" />
-            {isLoading ? "Adding..." : "Add Employee"}
+            {isLoading
+              ? "Adding..."
+              : isAtLimit
+                ? `Limit Reached (${employeeLimit})`
+                : "Add Employee"}
           </Button>
         </form>
 
         {/* Employees List */}
         <div className="space-y-4">
           <h3 className="font-medium">
-            Current Employees ({employeesList.length})
+            Current Employees ({employeesList.length}/{employeeLimit})
           </h3>
           {employeesList.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">

@@ -10,18 +10,38 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Button } from "./ui/button";
-import { UserCircle, Home, Settings } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
+import { UserCircle, Menu } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
+import { useState } from "react";
+import DashboardSidebar from "./dashboard-sidebar";
 
 export default function DashboardNavbar() {
   const supabase = createClient();
   const router = useRouter();
   const pathname = usePathname();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
     <nav className="w-full border-b border-gray-200 bg-white py-4">
       <div className="container mx-auto px-4 flex justify-between items-center">
         <div className="flex items-center gap-4">
+          {/* Mobile Menu Toggle - Only show on dashboard pages */}
+          {pathname.startsWith("/dashboard") && (
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-64">
+                <DashboardSidebar
+                  onNavigate={() => setIsMobileMenuOpen(false)}
+                />
+              </SheetContent>
+            </Sheet>
+          )}
+
           <Link href="/" prefetch className="flex items-center">
             <Image
               src="/images/logo.svg"
@@ -50,9 +70,11 @@ export default function DashboardNavbar() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard">Dashboard</Link>
-              </DropdownMenuItem>
+              {!pathname.startsWith("/dashboard") && (
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard">Dashboard</Link>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 onClick={async () => {
                   await supabase.auth.signOut();

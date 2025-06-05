@@ -6,7 +6,7 @@ import { SubscriptionCheck } from "@/components/subscription-check";
 import EmployeeForm from "@/components/employee-form";
 
 import Link from "next/link";
-import { checkUserSubscription } from "../../actions";
+import { checkUserSubscription, getUserEmployeeLimit } from "../../actions";
 import { InfoIcon } from "lucide-react";
 
 export default async function EmployeesPage() {
@@ -22,6 +22,7 @@ export default async function EmployeesPage() {
 
   // Check subscription status but don't redirect
   const isSubscribed = await checkUserSubscription(user?.id!);
+  const employeeLimit = await getUserEmployeeLimit(user.id);
 
   // Fetch employees
   const { data: employees } = await supabase
@@ -62,7 +63,12 @@ export default async function EmployeesPage() {
             </header>
 
             {/* Employee Form */}
-            <EmployeeForm employees={employees || []} userId={user.id} />
+            <EmployeeForm
+              employees={employees || []}
+              userId={user.id}
+              employeeLimit={employeeLimit}
+              isSubscribed={isSubscribed}
+            />
           </div>
         </main>
       </div>

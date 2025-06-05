@@ -5,7 +5,13 @@ import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 
-export default function DashboardSidebar() {
+interface DashboardSidebarProps {
+  onNavigate?: () => void;
+}
+
+export default function DashboardSidebar({
+  onNavigate,
+}: DashboardSidebarProps = {}) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -27,8 +33,10 @@ export default function DashboardSidebar() {
     },
   ];
 
-  const onNavigate = (url: string) => {
+  const handleNavigate = (url: string) => {
     router.push(url);
+    // Close mobile menu if callback provided
+    onNavigate?.();
   };
 
   return (
@@ -39,7 +47,7 @@ export default function DashboardSidebar() {
           {routes.map((route) => (
             <div
               key={route.href}
-              onClick={() => onNavigate(route.href)}
+              onClick={() => handleNavigate(route.href)}
               className={cn(
                 "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg cursor-pointer transition-colors",
                 "hover:bg-custom-blue/10 hover:text-custom-blue",
