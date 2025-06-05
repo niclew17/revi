@@ -30,7 +30,7 @@ export const signUpAction = async (formData: FormData) => {
         full_name: fullName,
         email: email,
       },
-      emailRedirectTo: "/auth/callback",
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/auth/callback`,
     },
   });
 
