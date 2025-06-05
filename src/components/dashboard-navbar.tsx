@@ -26,22 +26,6 @@ export default function DashboardNavbar() {
     <nav className="w-full border-b border-gray-200 bg-white py-4">
       <div className="container mx-auto px-4 flex justify-between items-center">
         <div className="flex items-center gap-4">
-          {/* Mobile Menu Toggle - Only show on dashboard pages */}
-          {pathname.startsWith("/dashboard") && (
-            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden">
-                  <Menu className="h-6 w-6" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-64">
-                <DashboardSidebar
-                  onNavigate={() => setIsMobileMenuOpen(false)}
-                />
-              </SheetContent>
-            </Sheet>
-          )}
-
           <Link href="/" prefetch className="flex items-center">
             <Image
               src="/images/logo.svg"
@@ -62,7 +46,7 @@ export default function DashboardNavbar() {
             </div>
           )}
         </div>
-        <div className="flex gap-4 items-center">
+        <div className="flex gap-2 items-center">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -85,6 +69,22 @@ export default function DashboardNavbar() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* Mobile Menu Toggle - Show on all dashboard pages */}
+          {pathname.startsWith("/dashboard") && (
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-64">
+                <DashboardSidebar
+                  onNavigate={() => setIsMobileMenuOpen(false)}
+                />
+              </SheetContent>
+            </Sheet>
+          )}
         </div>
       </div>
     </nav>
