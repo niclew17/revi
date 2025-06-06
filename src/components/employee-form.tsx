@@ -56,19 +56,25 @@ export default function EmployeeForm({
 
     setIsLoading(true);
     try {
-      const newEmployee = await addEmployee({
+      const result = await addEmployee({
         userId,
         name: newEmployeeName,
         position: newEmployeePosition || undefined,
       });
 
-      if (newEmployee) {
-        setEmployeesList([...employeesList, newEmployee]);
+      if (result.success && result.data) {
+        setEmployeesList([...employeesList, result.data]);
         setNewEmployeeName("");
         setNewEmployeePosition("");
         toast({
           title: "Success",
           description: "Employee added successfully",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Failed to add employee",
+          variant: "destructive",
         });
       }
     } catch (error) {
