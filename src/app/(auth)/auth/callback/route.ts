@@ -13,5 +13,8 @@ export async function GET(request: Request) {
 
   // URL to redirect to after sign in process completes
   const redirectTo = redirect_to || "/dashboard";
-  return NextResponse.redirect(new URL(redirectTo, requestUrl.origin));
-} 
+
+  // Use production URL for redirects
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.getrevio.io";
+  return NextResponse.redirect(new URL(redirectTo, baseUrl));
+}
