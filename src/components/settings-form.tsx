@@ -119,13 +119,29 @@ export function EmployeeForm({ employees, userId }: EmployeeFormProps) {
     if (!newEmployeeName.trim()) return;
 
     try {
-      const newEmployee = await addEmployee({
+      const response = await addEmployee({
         userId,
         name: newEmployeeName,
       });
 
-      if (newEmployee) {
-        setEmployeesList([...employeesList, newEmployee]);
+      if (response && typeof response === "object" && "success" in response) {
+        if (response.success && response.data) {
+          setEmployeesList([...employeesList, response.data]);
+          setNewEmployeeName("");
+          toast({
+            title: "Success",
+            description: "Employee added successfully",
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: response.error || "Failed to add employee",
+            variant: "destructive",
+          });
+        }
+      } else if (response && "id" in response) {
+        // Handle case where response is directly an Employee object
+        setEmployeesList([...employeesList, response as Employee]);
         setNewEmployeeName("");
         toast({
           title: "Success",
