@@ -5,22 +5,20 @@ import { createClient } from "../../supabase/server";
 import { v4 as uuidv4 } from "uuid";
 
 export const signUpAction = async (formData: FormData) => {
+  const email = formData.get("email")?.toString();
+  const password = formData.get("password")?.toString();
+  const fullName = formData.get("full_name")?.toString() || "";
+
+  if (!email || !password) {
+    return redirect(
+      `/sign-up?error=${encodeURIComponent("Email and password are required")}`,
+    );
+  }
+
   try {
-    const email = formData.get("email")?.toString();
-    const password = formData.get("password")?.toString();
-    const fullName = formData.get("full_name")?.toString() || "";
     const supabase = await createClient();
 
-    if (!email || !password) {
-      return redirect(
-        `/sign-up?error=${encodeURIComponent("Email and password are required")}`,
-      );
-    }
-
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -28,19 +26,28 @@ export const signUpAction = async (formData: FormData) => {
           full_name: fullName,
           email: email,
         },
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "https://sharp-diffie2-a4nxj.view-3.tempo-dev.app"}/auth/callback`,
+        emailRedirectTo: `https://www.getrevio.io/auth/callback`,
       },
     });
 
     if (error) {
+      console.error("Supabase signup error:", error);
       return redirect(`/sign-up?error=${encodeURIComponent(error.message)}`);
     }
 
-    // User profile is automatically created by database trigger
-    // No manual insertion needed
+    if (data.user && !data.user.email_confirmed_at) {
+      return redirect(
+        `/sign-up?success=${encodeURIComponent("Thanks for signing up! Please check your email for a verification link.")}`,
+      );
+    }
+
+    // If user is immediately confirmed, redirect to dashboard
+    if (data.user && data.user.email_confirmed_at) {
+      return redirect("/dashboard");
+    }
 
     return redirect(
-      `/sign-up?success=${encodeURIComponent("Thanks for signing up! Please check your email for a verification link.")}`,
+      `/sign-up?success=${encodeURIComponent("Account created successfully!")}`,
     );
   } catch (error) {
     console.error("Error in signUpAction:", error);
