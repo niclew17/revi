@@ -1,6 +1,5 @@
 "use server";
 
-import { encodedRedirect } from "@/utils/utils";
 import { redirect } from "next/navigation";
 import { createClient } from "../../supabase/server";
 import { v4 as uuidv4 } from "uuid";
@@ -13,10 +12,8 @@ export const signUpAction = async (formData: FormData) => {
     const supabase = await createClient();
 
     if (!email || !password) {
-      return encodedRedirect(
-        "error",
-        "/sign-up",
-        "Email and password are required",
+      return redirect(
+        `/sign-up?error=${encodeURIComponent("Email and password are required")}`,
       );
     }
 
@@ -36,23 +33,19 @@ export const signUpAction = async (formData: FormData) => {
     });
 
     if (error) {
-      return encodedRedirect("error", "/sign-up", error.message);
+      return redirect(`/sign-up?error=${encodeURIComponent(error.message)}`);
     }
 
     // User profile is automatically created by database trigger
     // No manual insertion needed
 
-    return encodedRedirect(
-      "success",
-      "/sign-up",
-      "Thanks for signing up! Please check your email for a verification link.",
+    return redirect(
+      `/sign-up?success=${encodeURIComponent("Thanks for signing up! Please check your email for a verification link.")}`,
     );
   } catch (error) {
     console.error("Error in signUpAction:", error);
-    return encodedRedirect(
-      "error",
-      "/sign-up",
-      "An unexpected error occurred during sign up",
+    return redirect(
+      `/sign-up?error=${encodeURIComponent("An unexpected error occurred during sign up")}`,
     );
   }
 };
@@ -69,16 +62,14 @@ export const signInAction = async (formData: FormData) => {
     });
 
     if (error) {
-      return encodedRedirect("error", "/sign-in", error.message);
+      return redirect(`/sign-in?error=${encodeURIComponent(error.message)}`);
     }
 
     return redirect("/dashboard");
   } catch (error) {
     console.error("Error in signInAction:", error);
-    return encodedRedirect(
-      "error",
-      "/sign-in",
-      "An unexpected error occurred during sign in",
+    return redirect(
+      `/sign-in?error=${encodeURIComponent("An unexpected error occurred during sign in")}`,
     );
   }
 };
@@ -90,16 +81,16 @@ export const forgotPasswordAction = async (formData: FormData) => {
     const callbackUrl = formData.get("callbackUrl")?.toString();
 
     if (!email) {
-      return encodedRedirect("error", "/forgot-password", "Email is required");
+      return redirect(
+        `/forgot-password?error=${encodeURIComponent("Email is required")}`,
+      );
     }
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {});
 
     if (error) {
-      return encodedRedirect(
-        "error",
-        "/forgot-password",
-        "Could not reset password",
+      return redirect(
+        `/forgot-password?error=${encodeURIComponent("Could not reset password")}`,
       );
     }
 
@@ -107,17 +98,13 @@ export const forgotPasswordAction = async (formData: FormData) => {
       return redirect(callbackUrl);
     }
 
-    return encodedRedirect(
-      "success",
-      "/forgot-password",
-      "Check your email for a link to reset your password.",
+    return redirect(
+      `/forgot-password?success=${encodeURIComponent("Check your email for a link to reset your password.")}`,
     );
   } catch (error) {
     console.error("Error in forgotPasswordAction:", error);
-    return encodedRedirect(
-      "error",
-      "/forgot-password",
-      "An unexpected error occurred",
+    return redirect(
+      `/forgot-password?error=${encodeURIComponent("An unexpected error occurred")}`,
     );
   }
 };
@@ -130,18 +117,14 @@ export const resetPasswordAction = async (formData: FormData) => {
     const confirmPassword = formData.get("confirmPassword") as string;
 
     if (!password || !confirmPassword) {
-      return encodedRedirect(
-        "error",
-        "/protected/reset-password",
-        "Password and confirm password are required",
+      return redirect(
+        `/protected/reset-password?error=${encodeURIComponent("Password and confirm password are required")}`,
       );
     }
 
     if (password !== confirmPassword) {
-      return encodedRedirect(
-        "error",
-        "/dashboard/reset-password",
-        "Passwords do not match",
+      return redirect(
+        `/dashboard/reset-password?error=${encodeURIComponent("Passwords do not match")}`,
       );
     }
 
@@ -150,24 +133,18 @@ export const resetPasswordAction = async (formData: FormData) => {
     });
 
     if (error) {
-      return encodedRedirect(
-        "error",
-        "/dashboard/reset-password",
-        "Password update failed",
+      return redirect(
+        `/dashboard/reset-password?error=${encodeURIComponent("Password update failed")}`,
       );
     }
 
-    return encodedRedirect(
-      "success",
-      "/protected/reset-password",
-      "Password updated",
+    return redirect(
+      `/protected/reset-password?success=${encodeURIComponent("Password updated")}`,
     );
   } catch (error) {
     console.error("Error in resetPasswordAction:", error);
-    return encodedRedirect(
-      "error",
-      "/dashboard/reset-password",
-      "An unexpected error occurred",
+    return redirect(
+      `/dashboard/reset-password?error=${encodeURIComponent("An unexpected error occurred")}`,
     );
   }
 };
