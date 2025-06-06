@@ -18,75 +18,67 @@ export const signUpAction = async (formData: FormData) => {
     );
   }
 
-  try {
-    const supabase = await createClient();
+  const supabase = await createClient();
 
-    // First check if user already exists
-    const { data: existingUser } = await supabase
-      .from("users")
-      .select("*")
-      .eq("email", email)
-      .maybeSingle();
+  // First check if user already exists
+  const { data: existingUser } = await supabase
+    .from("users")
+    .select("*")
+    .eq("email", email)
+    .maybeSingle();
 
-    if (existingUser) {
-      console.log("User already exists with this email");
-      return redirect(
-        `/sign-up?error=${encodeURIComponent("An account with this email already exists. Please sign in instead.")}`,
-      );
-    }
-
-    // Get site URL from env or use default
-    const siteUrl =
-      process.env.NEXT_PUBLIC_SITE_URL || "https://www.getrevio.io";
-    const redirectUrl = `${siteUrl}/auth/callback`;
-
-    console.log("Using redirect URL:", redirectUrl);
-
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-          email: email,
-        },
-        emailRedirectTo: redirectUrl,
-      },
-    });
-
-    console.log("Signup response:", {
-      user: data?.user?.id,
-      error: error?.message,
-    });
-
-    if (error) {
-      console.error("Supabase signup error:", error);
-      return redirect(`/sign-up?error=${encodeURIComponent(error.message)}`);
-    }
-
-    if (!data.user) {
-      console.error("No user returned from signup");
-      return redirect(
-        `/sign-up?error=${encodeURIComponent("Failed to create account. Please try again.")}`,
-      );
-    }
-
-    if (!data.user.email_confirmed_at) {
-      console.log("Email confirmation needed, redirecting to success page");
-      return redirect(
-        `/sign-up?success=${encodeURIComponent("Thanks for signing up! Please check your email for a verification link.")}`,
-      );
-    }
-
-    // If user is immediately confirmed, redirect to dashboard
-    console.log("User confirmed immediately, redirecting to dashboard");
-    return redirect("/dashboard");
-  } catch (error) {
-    console.error("Error in signUpAction:", error);
+  if (existingUser) {
+    console.log("User already exists with this email");
     return redirect(
-      `/sign-up?error=${encodeURIComponent("An unexpected error occurred during sign up")}`,
+      `/sign-up?error=${encodeURIComponent("An account with this email already exists. Please sign in instead.")}`,
     );
   }
+
+  // Get site URL from env or use default
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.getrevio.io";
+  const redirectUrl = `${siteUrl}/auth/callback`;
+
+  console.log("Using redirect URL:", redirectUrl);
+
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        full_name: fullName,
+        email: email,
+      },
+      emailRedirectTo: redirectUrl,
+    },
+  });
+
+  console.log("Signup response:", {
+    user: data?.user?.id,
+    error: error?.message,
+  });
+
+  if (error) {
+    console.error("Supabase signup error:", error);
+    return redirect(`/sign-up?error=${encodeURIComponent(error.message)}`);
+  }
+
+  if (!data.user) {
+    console.error("No user returned from signup");
+    return redirect(
+      `/sign-up?error=${encodeURIComponent("Failed to create account. Please try again.")}`,
+    );
+  }
+
+  if (!data.user.email_confirmed_at) {
+    console.log("Email confirmation needed, redirecting to success page");
+    return redirect(
+      `/sign-up?success=${encodeURIComponent("Thanks for signing up! Please check your email for a verification link.")}`,
+    );
+  }
+
+  // If user is immediately confirmed, redirect to dashboard
+  console.log("User confirmed immediately, redirecting to dashboard");
+  return redirect("/dashboard");
 };
 
 export const signInAction = async (formData: FormData) => {
