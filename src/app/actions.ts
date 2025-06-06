@@ -9,7 +9,10 @@ export const signUpAction = async (formData: FormData) => {
   const password = formData.get("password")?.toString();
   const fullName = formData.get("full_name")?.toString() || "";
 
+  console.log("Starting signup process for email:", email);
+
   if (!email || !password) {
+    console.log("Missing email or password");
     return redirect(
       `/sign-up?error=${encodeURIComponent("Email and password are required")}`,
     );
@@ -17,6 +20,27 @@ export const signUpAction = async (formData: FormData) => {
 
   try {
     const supabase = await createClient();
+
+    // First check if user already exists
+    const { data: existingUser } = await supabase
+      .from("users")
+      .select("*")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (existingUser) {
+      console.log("User already exists with this email");
+      return redirect(
+        `/sign-up?error=${encodeURIComponent("An account with this email already exists. Please sign in instead.")}`,
+      );
+    }
+
+    // Get site URL from env or use default
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL || "https://www.getrevio.io";
+    const redirectUrl = `${siteUrl}/auth/callback`;
+
+    console.log("Using redirect URL:", redirectUrl);
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -26,8 +50,13 @@ export const signUpAction = async (formData: FormData) => {
           full_name: fullName,
           email: email,
         },
-        emailRedirectTo: `https://www.getrevio.io/auth/callback`,
+        emailRedirectTo: redirectUrl,
       },
+    });
+
+    console.log("Signup response:", {
+      user: data?.user?.id,
+      error: error?.message,
     });
 
     if (error) {
@@ -35,20 +64,23 @@ export const signUpAction = async (formData: FormData) => {
       return redirect(`/sign-up?error=${encodeURIComponent(error.message)}`);
     }
 
-    if (data.user && !data.user.email_confirmed_at) {
+    if (!data.user) {
+      console.error("No user returned from signup");
+      return redirect(
+        `/sign-up?error=${encodeURIComponent("Failed to create account. Please try again.")}`,
+      );
+    }
+
+    if (!data.user.email_confirmed_at) {
+      console.log("Email confirmation needed, redirecting to success page");
       return redirect(
         `/sign-up?success=${encodeURIComponent("Thanks for signing up! Please check your email for a verification link.")}`,
       );
     }
 
     // If user is immediately confirmed, redirect to dashboard
-    if (data.user && data.user.email_confirmed_at) {
-      return redirect("/dashboard");
-    }
-
-    return redirect(
-      `/sign-up?success=${encodeURIComponent("Account created successfully!")}`,
-    );
+    console.log("User confirmed immediately, redirecting to dashboard");
+    return redirect("/dashboard");
   } catch (error) {
     console.error("Error in signUpAction:", error);
     return redirect(
