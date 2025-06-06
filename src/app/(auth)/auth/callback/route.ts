@@ -5,14 +5,36 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const redirect_to = requestUrl.searchParams.get("redirect_to");
+  const type = requestUrl.searchParams.get("type");
 
   if (code) {
     const supabase = await createClient();
-    await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+    if (error) {
+      console.error("Error exchanging code for session:", error);
+      return NextResponse.redirect(
+        new URL(
+          "/sign-in?error=" +
+            encodeURIComponent("Verification failed. Please try again."),
+          process.env.NEXT_PUBLIC_SITE_URL || "https://www.getrevio.io",
+        ),
+      );
+    }
+
+    // Log successful verification
+    console.log("Verification successful:", {
+      type,
+      userId: data?.user?.id,
+      email: data?.user?.email,
+      emailConfirmed: data?.user?.email_confirmed_at,
+    });
   }
 
   // URL to redirect to after sign in process completes
-  const redirectTo = redirect_to || "/dashboard";
+  // For email verification, always redirect to dashboard
+  const redirectTo =
+    type === "signup" ? "/dashboard" : redirect_to || "/dashboard";
 
   // Use production URL for redirects
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.getrevio.io";
