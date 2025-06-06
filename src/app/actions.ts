@@ -82,27 +82,20 @@ export const signUpAction = async (formData: FormData) => {
 };
 
 export const signInAction = async (formData: FormData) => {
-  try {
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
-    const supabase = await createClient();
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+  const supabase = await createClient();
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
-    if (error) {
-      return redirect(`/sign-in?error=${encodeURIComponent(error.message)}`);
-    }
-
-    return redirect("/dashboard");
-  } catch (error) {
-    console.error("Error in signInAction:", error);
-    return redirect(
-      `/sign-in?error=${encodeURIComponent("An unexpected error occurred during sign in")}`,
-    );
+  if (error) {
+    return redirect(`/sign-in?error=${encodeURIComponent(error.message)}`);
   }
+
+  return redirect("/dashboard");
 };
 
 export const forgotPasswordAction = async (formData: FormData) => {

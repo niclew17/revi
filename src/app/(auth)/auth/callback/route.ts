@@ -32,9 +32,9 @@ export async function GET(request: Request) {
   }
 
   // URL to redirect to after sign in process completes
-  // For email verification, always redirect to dashboard
+  // For email verification, redirect to sign-in page
   const redirectTo =
-    type === "signup" ? "/dashboard" : redirect_to || "/dashboard";
+    type === "signup" ? "/sign-in" : redirect_to || "/dashboard";
 
   // Use production URL for redirects
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.getrevio.io";
