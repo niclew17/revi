@@ -10,7 +10,7 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
           {/* Product Column */}
           <div>
-            <h3 className="font-semibold text-gray-900 mb-4">Revi</h3>
+            <h3 className="font-semibold text-gray-900 mb-4">Revio</h3>
             <ul className="space-y-2">
               <li>
                 <Link
@@ -128,7 +128,7 @@ export default function Footer() {
 
         <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-gray-200">
           <div className="text-gray-600 mb-4 md:mb-0">
-            © {currentYear} Revi - Voice-to-Review Platform. All rights
+            © {currentYear} Revio - Fast Click-to-Review Platform. All rights
             reserved.
           </div>
 

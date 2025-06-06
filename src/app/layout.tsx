@@ -7,8 +7,9 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Revi - Reviews through the power of Voice",
-  description: "A modern full-stack starter template powered by Next.js",
+  title: "Revio - Fast Click-to-Review Platform",
+  description:
+    "A modern review platform for posting to Google and Meta with just one click",
   icons: {
     icon: "/images/logo.svg",
   },

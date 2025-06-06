@@ -5,7 +5,7 @@ import Footer from "@/components/footer";
 import { createClient } from "../../supabase/server";
 import {
   ArrowUpRight,
-  Mic,
+  MousePointer,
   MessageSquare,
   Share2,
   BarChart,
@@ -33,10 +33,10 @@ export default async function Home() {
       <section className="py-24 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">How Revi Works</h2>
+            <h2 className="text-3xl font-bold mb-4">How Revio Works</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
               Our streamlined process makes collecting and sharing customer
-              reviews easier than ever before.
+              reviews easier and faster than ever before.
             </p>
           </div>
 
@@ -55,14 +55,14 @@ export default async function Home() {
             </div>
             <div className="flex flex-col items-center text-center">
               <div className="w-16 h-16 bg-custom-blue/10 rounded-full flex items-center justify-center mb-6">
-                <Mic className="w-8 h-8 text-custom-blue" />
+                <MousePointer className="w-8 h-8 text-custom-blue" />
               </div>
               <h3 className="text-xl font-semibold mb-3">
-                2. Collect Voice Reviews
+                2. One-Click Reviews
               </h3>
               <p className="text-gray-600">
-                Customers use these links to record their voice feedback in
-                seconds - no typing required.
+                Customers use these links to submit reviews with just one click
+                - fast and frictionless experience.
               </p>
             </div>
             <div className="flex flex-col items-center text-center">
@@ -70,11 +70,11 @@ export default async function Home() {
                 <Share2 className="w-8 h-8 text-custom-blue" />
               </div>
               <h3 className="text-xl font-semibold mb-3">
-                3. Share Everywhere
+                3. Post to Google & Meta
               </h3>
               <p className="text-gray-600">
-                Our AI converts voice to optimized text reviews that can be
-                shared across multiple platforms.
+                Reviews are automatically formatted and posted directly to
+                Google and Meta social platforms for maximum visibility.
               </p>
             </div>
           </div>
@@ -88,17 +88,17 @@ export default async function Home() {
             <h2 className="text-3xl font-bold mb-4">Powerful Features</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
               Everything you need to streamline your review collection process
-              and boost your online presence.
+              and boost your online presence on Google and Meta platforms.
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {[
               {
-                icon: <Mic className="w-6 h-6" />,
-                title: "Voice Recording Interface",
+                icon: <MousePointer className="w-6 h-6" />,
+                title: "One-Click Review Interface",
                 description:
-                  "Simple, intuitive recording with audio visualization",
+                  "Simple, intuitive interface for instant review submission",
               },
               {
                 icon: <Users2 className="w-6 h-6" />,
@@ -108,15 +108,15 @@ export default async function Home() {
               },
               {
                 icon: <MessageSquare className="w-6 h-6" />,
-                title: "AI Transcription Engine",
+                title: "Smart Review Templates",
                 description:
-                  "Convert voice to optimized text for different platforms",
+                  "Pre-formatted templates for quick and easy review submission",
               },
               {
                 icon: <Share2 className="w-6 h-6" />,
-                title: "Multi-Platform Publishing",
+                title: "Google & Meta Publishing",
                 description:
-                  "One-click posting to Google, Facebook, and Instagram",
+                  "Direct posting to Google and Meta social platforms",
               },
               {
                 icon: <Link className="w-6 h-6" />,
@@ -149,7 +149,7 @@ export default async function Home() {
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold mb-4">What Our Customers Say</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Service businesses love how Revi simplifies their review
+              Service businesses love how Revio simplifies their review
               collection process.
             </p>
           </div>
@@ -166,7 +166,7 @@ export default async function Home() {
                 </div>
               </div>
               <p className="text-gray-600">
-                "Our technicians love sharing their Revi links with customers.
+                "Our technicians love sharing their Revio links with customers.
                 We've seen a 300% increase in reviews since implementing the
                 system."
               </p>
@@ -184,7 +184,7 @@ export default async function Home() {
                 </div>
               </div>
               <p className="text-gray-600">
-                "The voice recording feature is a game-changer. Our customers
+                "The one-click review feature is a game-changer. Our customers
                 find it so much easier than typing out reviews on multiple
                 platforms."
               </p>
