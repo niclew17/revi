@@ -31,6 +31,13 @@ export default async function EmployeesPage() {
     .eq("user_id", user.id)
     .order("created_at", { ascending: true });
 
+  // Fetch company information
+  const { data: companyInfo } = await supabase
+    .from("company_info")
+    .select("*")
+    .eq("user_id", user.id)
+    .single();
+
   return (
     <SubscriptionCheck>
       <DashboardNavbar />
@@ -71,6 +78,7 @@ export default async function EmployeesPage() {
               userId={user.id}
               employeeLimit={employeeLimit}
               isSubscribed={isSubscribed}
+              companyInfo={companyInfo}
             />
           </div>
         </main>

@@ -244,6 +244,7 @@ type CompanyInfoInput = {
   companyName: string;
   website: string;
   email?: string;
+  businessDescription?: string;
   googleReviewsUrl?: string;
   facebookUrl?: string;
   instagramUrl?: string;
@@ -257,6 +258,7 @@ export const updateCompanyInfo = async (input: CompanyInfoInput) => {
       companyName,
       website,
       email,
+      businessDescription,
       googleReviewsUrl,
       facebookUrl,
       instagramUrl,
@@ -277,6 +279,7 @@ export const updateCompanyInfo = async (input: CompanyInfoInput) => {
           company_name: companyName,
           website,
           email,
+          business_description: businessDescription,
           google_reviews_url: googleReviewsUrl,
           facebook_url: facebookUrl,
           instagram_url: instagramUrl,
@@ -297,6 +300,7 @@ export const updateCompanyInfo = async (input: CompanyInfoInput) => {
         company_name: companyName,
         website,
         email,
+        business_description: businessDescription,
         google_reviews_url: googleReviewsUrl,
         facebook_url: facebookUrl,
         instagram_url: instagramUrl,
@@ -328,6 +332,25 @@ export const addEmployee = async (input: EmployeeInput) => {
   try {
     const supabase = await createClient();
     const { userId, name, position } = input;
+
+    // Check if company information is complete
+    const { data: companyInfo } = await supabase
+      .from("company_info")
+      .select("company_name, business_description")
+      .eq("user_id", userId)
+      .single();
+
+    if (
+      !companyInfo ||
+      !companyInfo.company_name ||
+      !companyInfo.business_description
+    ) {
+      return {
+        success: false,
+        error:
+          "Please complete your company information (business name and description) before creating employees. This information is needed for AI review generation.",
+      };
+    }
 
     // Check current employee count and limit
     const { data: currentEmployees } = await supabase

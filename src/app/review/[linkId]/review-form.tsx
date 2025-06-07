@@ -22,12 +22,14 @@ interface ReviewFormProps {
   employeeId: string;
   employeeName: string;
   companyName: string;
+  businessDescription: string;
 }
 
 export default function ReviewForm({
   employeeId,
   employeeName,
   companyName,
+  businessDescription,
 }: ReviewFormProps) {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
@@ -127,10 +129,21 @@ export default function ReviewForm({
         ...selectedAdditionalAttributes,
       ];
 
+      // Log the data being sent to verify it's correct
+      console.log("Sending to edge function:", {
+        selectedQualities: allQualities,
+        businessName: companyName,
+        businessDescription: businessDescription,
+      });
+
       const { data, error } = await supabase.functions.invoke(
         "supabase-functions-generate-review",
         {
-          body: { selectedQualities: allQualities },
+          body: {
+            selectedQualities: allQualities,
+            businessName: companyName,
+            businessDescription: businessDescription,
+          },
         },
       );
 

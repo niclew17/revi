@@ -30,11 +30,18 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
   }
 
   // Fetch company info separately
-  const { data: companyInfo } = await supabase
+  const { data: companyInfo, error: companyError } = await supabase
     .from("company_info")
-    .select("company_name, website")
+    .select("company_name, website, business_description")
     .eq("user_id", employee.user_id)
     .single();
+
+  // Log company info for debugging
+  console.log("Company info fetched:", companyInfo);
+
+  if (companyError) {
+    console.error("Error fetching company info:", companyError);
+  }
 
   // Fetch user info separately
   const { data: userInfo } = await supabase
@@ -60,6 +67,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
           employeeId={employee.id}
           employeeName={employeeName}
           companyName={companyName}
+          businessDescription={companyInfo?.business_description || ""}
         />
       </div>
     </main>

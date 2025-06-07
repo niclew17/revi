@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
 import {
   Card,
   CardContent,
@@ -21,6 +22,7 @@ export type CompanyInfo = {
   company_name: string;
   website: string;
   email?: string;
+  business_description?: string;
   google_reviews_url?: string;
   facebook_url?: string;
   instagram_url?: string;
@@ -39,6 +41,9 @@ export default function CompanyForm({ companyInfo, userId }: CompanyFormProps) {
   );
   const [website, setWebsite] = useState(companyInfo?.website || "");
   const [email, setEmail] = useState(companyInfo?.email || "");
+  const [businessDescription, setBusinessDescription] = useState(
+    companyInfo?.business_description || "",
+  );
   const [googleReviewsUrl, setGoogleReviewsUrl] = useState(
     companyInfo?.google_reviews_url || "",
   );
@@ -60,6 +65,7 @@ export default function CompanyForm({ companyInfo, userId }: CompanyFormProps) {
         companyName,
         website,
         email,
+        businessDescription,
         googleReviewsUrl,
         facebookUrl,
         instagramUrl,
@@ -121,6 +127,17 @@ export default function CompanyForm({ companyInfo, userId }: CompanyFormProps) {
               onChange={(e) => setWebsite(e.target.value)}
               placeholder="https://yourcompany.com"
               type="url"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="businessDescription">Business Description</Label>
+            <Textarea
+              id="businessDescription"
+              value={businessDescription}
+              onChange={(e) => setBusinessDescription(e.target.value)}
+              placeholder="Tell customers about your business and what services you provide..."
+              rows={4}
             />
           </div>
 

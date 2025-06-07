@@ -11,10 +11,17 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
-import { PlusCircle, Trash2, User, InfoIcon } from "lucide-react";
+import {
+  PlusCircle,
+  Trash2,
+  User,
+  InfoIcon,
+  AlertTriangle,
+} from "lucide-react";
 import { addEmployee, deleteEmployee } from "@/app/actions";
 import { useToast } from "./ui/use-toast";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export type Employee = {
   id: string;
@@ -26,11 +33,25 @@ export type Employee = {
   review_count?: number;
 };
 
+export type CompanyInfo = {
+  id: string;
+  user_id: string;
+  company_name: string;
+  website: string | null;
+  email: string | null;
+  business_description: string | null;
+  google_reviews_url: string | null;
+  facebook_url: string | null;
+  instagram_url: string | null;
+  created_at: string | null;
+};
+
 interface EmployeeFormProps {
   employees: Employee[];
   userId: string;
   employeeLimit: number;
   isSubscribed: boolean;
+  companyInfo: CompanyInfo | null;
 }
 
 export default function EmployeeForm({
@@ -38,6 +59,7 @@ export default function EmployeeForm({
   userId,
   employeeLimit,
   isSubscribed,
+  companyInfo,
 }: EmployeeFormProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -57,6 +79,12 @@ export default function EmployeeForm({
     : employeeLimit === 10
       ? "Business"
       : "Enterprise";
+
+  // Check if company information is complete
+  const isCompanyInfoComplete =
+    companyInfo && companyInfo.company_name && companyInfo.business_description;
+
+  const canCreateEmployees = isCompanyInfoComplete && !isAtLimit;
 
   const handleAddEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,12 +131,14 @@ export default function EmployeeForm({
       const result = await deleteEmployee(employeeId);
 
       if (result.success) {
-        // Only update UI after successful deletion
+        // Update local state immediately
         setEmployeesList(employeesList.filter((emp) => emp.id !== employeeId));
         toast({
           title: "Success",
           description: "Employee removed successfully",
         });
+        // Refresh the page data to ensure consistency
+        router.refresh();
       } else {
         toast({
           title: "Error",
@@ -137,8 +167,26 @@ export default function EmployeeForm({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Company Info Warning */}
+        {!isCompanyInfoComplete && (
+          <div className="bg-red-100 border border-red-300 text-red-800 p-4 rounded-lg flex items-center gap-3">
+            <AlertTriangle size="18" />
+            <div>
+              <p className="font-medium">Company Information Required</p>
+              <p className="text-sm">
+                Please complete your company information (business name and
+                description) before creating employees. This information is
+                needed for AI review generation.{" "}
+                <Link href="/dashboard" className="underline font-medium">
+                  Complete company info
+                </Link>
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Add Employee Form */}
-        {isAtLimit && (
+        {isAtLimit && isCompanyInfoComplete && (
           <div className="bg-orange-100 border border-orange-300 text-orange-800 p-4 rounded-lg flex items-center gap-3">
             <InfoIcon size="18" />
             <div>
@@ -171,7 +219,7 @@ export default function EmployeeForm({
 
         <form
           onSubmit={handleAddEmployee}
-          className={`space-y-4 p-4 border rounded-lg ${isAtLimit ? "bg-muted/30 opacity-60" : "bg-muted/50"}`}
+          className={`space-y-4 p-4 border rounded-lg ${!canCreateEmployees ? "bg-muted/30 opacity-60" : "bg-muted/50"}`}
         >
           <h3 className="font-medium">Add New Employee</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -183,7 +231,7 @@ export default function EmployeeForm({
                 onChange={(e) => setNewEmployeeName(e.target.value)}
                 placeholder="John Doe"
                 required
-                disabled={isAtLimit}
+                disabled={!canCreateEmployees}
               />
             </div>
             <div className="space-y-2">
@@ -193,21 +241,23 @@ export default function EmployeeForm({
                 value={newEmployeePosition}
                 onChange={(e) => setNewEmployeePosition(e.target.value)}
                 placeholder="Service Technician"
-                disabled={isAtLimit}
+                disabled={!canCreateEmployees}
               />
             </div>
           </div>
           <Button
             type="submit"
-            disabled={isLoading || isAtLimit}
+            disabled={isLoading || !canCreateEmployees}
             className="w-full md:w-auto"
           >
             <PlusCircle className="h-4 w-4 mr-2" />
             {isLoading
               ? "Adding..."
-              : isAtLimit
-                ? `Limit Reached (${employeeLimit})`
-                : "Add Employee"}
+              : !isCompanyInfoComplete
+                ? "Complete Company Info First"
+                : isAtLimit
+                  ? `Limit Reached (${employeeLimit})`
+                  : "Add Employee"}
           </Button>
         </form>
 
