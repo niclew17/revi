@@ -19,6 +19,7 @@ export type Employee = {
   user_id: string;
   created_at: string;
   unique_link_id: string;
+  review_count?: number;
 };
 
 interface ReviewLinksProps {
@@ -68,7 +69,7 @@ export default function ReviewLinks({ employees }: ReviewLinksProps) {
         ) : (
           <div className="grid gap-4">
             {employees.map((employee) => {
-              const reviewUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/review/${employee.unique_link_id}`;
+              const reviewUrl = `${window.location.origin}/review/${employee.unique_link_id}`;
 
               return (
                 <div
@@ -83,10 +84,13 @@ export default function ReviewLinks({ employees }: ReviewLinksProps) {
                       <div className="flex-1">
                         <div className="font-medium">{employee.name}</div>
                         {employee.position && (
-                          <div className="text-sm text-muted-foreground mb-2">
+                          <div className="text-sm text-muted-foreground">
                             {employee.position}
                           </div>
                         )}
+                        <div className="text-xs text-muted-foreground mb-2">
+                          {employee.review_count || 0} reviews completed
+                        </div>
                         <div className="text-xs text-muted-foreground bg-muted p-2 rounded font-mono break-all">
                           {reviewUrl}
                         </div>

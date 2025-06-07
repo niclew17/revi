@@ -17,7 +17,7 @@ export default function Hero() {
         <div className="container mx-auto px-4">
           <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 mb-8 tracking-tight">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0fb0f0] to-black">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-custom-blue to-black">
                 Revio
               </span>{" "}
               - Get More Reviews With One Click

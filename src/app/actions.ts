@@ -399,3 +399,56 @@ export const deleteEmployee = async (employeeId: string) => {
     };
   }
 };
+
+type ReviewInput = {
+  employeeId: string;
+  customerName?: string;
+  reviewText: string;
+  rating: number;
+  platforms: string[];
+};
+
+export const submitReview = async (input: ReviewInput) => {
+  try {
+    const supabase = await createClient();
+    const { employeeId, customerName, reviewText, rating, platforms } = input;
+
+    // Insert the review
+    const { error: reviewError } = await supabase.from("reviews").insert({
+      employee_id: employeeId,
+      customer_name: customerName,
+      review_text: reviewText,
+      rating,
+      platforms,
+    });
+
+    if (reviewError) {
+      console.error("Failed to submit review:", reviewError);
+      return {
+        success: false,
+        error: "Failed to submit review",
+      };
+    }
+
+    // Increment the employee's review count
+    const { error: updateError } = await supabase.rpc(
+      "increment_review_count",
+      {
+        employee_id: employeeId,
+      },
+    );
+
+    if (updateError) {
+      console.error("Failed to update review count:", updateError);
+      // Don't fail the whole operation if count update fails
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error in submitReview:", error);
+    return {
+      success: false,
+      error: "An unexpected error occurred while submitting review",
+    };
+  }
+};

@@ -22,6 +22,7 @@ export type Employee = {
   user_id: string;
   created_at: string;
   unique_link_id: string;
+  review_count?: number;
 };
 
 interface EmployeeFormProps {
@@ -221,6 +222,9 @@ export default function EmployeeForm({
                           {employee.position}
                         </div>
                       )}
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {employee.review_count || 0} reviews completed
+                      </div>
                     </div>
                   </div>
                   <Button

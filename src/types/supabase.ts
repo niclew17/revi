@@ -54,6 +54,7 @@ export type Database = {
           id: string
           name: string
           position: string | null
+          review_count: number | null
           unique_link_id: string
           updated_at: string | null
           user_id: string
@@ -63,6 +64,7 @@ export type Database = {
           id?: string
           name: string
           position?: string | null
+          review_count?: number | null
           unique_link_id: string
           updated_at?: string | null
           user_id: string
@@ -72,11 +74,53 @@ export type Database = {
           id?: string
           name?: string
           position?: string | null
+          review_count?: number | null
           unique_link_id?: string
           updated_at?: string | null
           user_id?: string
         }
         Relationships: []
+      }
+      reviews: {
+        Row: {
+          created_at: string | null
+          customer_name: string | null
+          employee_id: string
+          id: string
+          platforms: string[] | null
+          rating: number | null
+          review_text: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_name?: string | null
+          employee_id: string
+          id?: string
+          platforms?: string[] | null
+          rating?: number | null
+          review_text?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_name?: string | null
+          employee_id?: string
+          id?: string
+          platforms?: string[] | null
+          rating?: number | null
+          review_text?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscriptions: {
         Row: {
