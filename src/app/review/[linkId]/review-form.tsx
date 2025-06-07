@@ -6,13 +6,6 @@ import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
 import { Textarea } from "../../../components/ui/textarea";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../../components/ui/select";
-import {
   Card,
   CardContent,
   CardDescription,
@@ -20,7 +13,7 @@ import {
   CardTitle,
 } from "../../../components/ui/card";
 import { Checkbox } from "../../../components/ui/checkbox";
-import { Star, CheckCircle } from "lucide-react";
+import { Star, CheckCircle, ArrowLeft } from "lucide-react";
 import { submitReview } from "../../actions";
 import { useToast } from "../../../components/ui/use-toast";
 
@@ -36,18 +29,61 @@ export default function ReviewForm({
   companyName,
 }: ReviewFormProps) {
   const { toast } = useToast();
+  const [currentStep, setCurrentStep] = useState(1);
   const [customerName, setCustomerName] = useState("");
   const [reviewText, setReviewText] = useState("");
-  const [rating, setRating] = useState<number>(5);
+  const [rating, setRating] = useState<number>(0);
+  const [selectedAttributes, setSelectedAttributes] = useState<string[]>([]);
   const [platforms, setPlatforms] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const attributes = [
+    "Professional",
+    "Timely",
+    "Kind",
+    "Precise",
+    "Considerate",
+  ];
 
   const handlePlatformChange = (platform: string, checked: boolean) => {
     if (checked) {
       setPlatforms([...platforms, platform]);
     } else {
       setPlatforms(platforms.filter((p) => p !== platform));
+    }
+  };
+
+  const handleRatingSelect = (selectedRating: number) => {
+    setRating(selectedRating);
+    setCurrentStep(2);
+  };
+
+  const handleAttributeToggle = (attribute: string) => {
+    setSelectedAttributes((prev) => {
+      if (prev.includes(attribute)) {
+        return prev.filter((a) => a !== attribute);
+      } else {
+        return [...prev, attribute];
+      }
+    });
+  };
+
+  const handleNextToFinalStep = () => {
+    if (selectedAttributes.length > 0) {
+      setCurrentStep(3);
+    } else {
+      toast({
+        title: "Please select at least one attribute",
+        description: "Choose what made your experience great.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
     }
   };
 
@@ -69,7 +105,7 @@ export default function ReviewForm({
       const result = await submitReview({
         employeeId,
         customerName: customerName.trim() || undefined,
-        reviewText: reviewText.trim(),
+        reviewText: `${reviewText.trim()}\n\nAttributes: ${selectedAttributes.join(", ")}`,
         rating,
         platforms,
       });
@@ -122,13 +158,145 @@ export default function ReviewForm({
     );
   }
 
+  // Step 1: Rating Selection
+  if (currentStep === 1) {
+    return (
+      <Card className="bg-white">
+        <CardHeader className="text-center">
+          <CardTitle>Rate Your Experience</CardTitle>
+          <CardDescription>
+            How would you rate your experience with {employeeName}?
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-center space-x-2 py-8">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                type="button"
+                onClick={() => handleRatingSelect(star)}
+                className="transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
+              >
+                <Star
+                  className={`w-12 h-12 ${
+                    star <= rating
+                      ? "fill-yellow-400 text-yellow-400"
+                      : "text-gray-300 hover:text-yellow-200"
+                  }`}
+                />
+              </button>
+            ))}
+          </div>
+          <div className="text-center text-sm text-muted-foreground">
+            Click a star to rate your experience
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Step 2: Attribute Selection
+  if (currentStep === 2) {
+    return (
+      <Card className="bg-white">
+        <CardHeader>
+          <div className="flex items-center gap-2 mb-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBack}
+              className="p-1"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+            <div className="flex">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star
+                  key={star}
+                  className={`w-4 h-4 ${
+                    star <= rating
+                      ? "fill-yellow-400 text-yellow-400"
+                      : "text-gray-300"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+          <CardTitle>What made your experience great?</CardTitle>
+          <CardDescription>
+            Select the attributes that best describe {employeeName}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-4">
+            {attributes.map((attribute) => (
+              <div
+                key={attribute}
+                className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                  selectedAttributes.includes(attribute)
+                    ? "border-primary bg-primary/5"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+                onClick={() => handleAttributeToggle(attribute)}
+              >
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    checked={selectedAttributes.includes(attribute)}
+                    onChange={() => handleAttributeToggle(attribute)}
+                  />
+                  <Label className="text-base font-medium cursor-pointer">
+                    {attribute}
+                  </Label>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6">
+            <Button
+              onClick={handleNextToFinalStep}
+              className="w-full"
+              disabled={selectedAttributes.length === 0}
+            >
+              Continue
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Step 3: Review Details
   return (
     <Card className="bg-white">
       <CardHeader>
-        <CardTitle>Leave a Review</CardTitle>
+        <div className="flex items-center gap-2 mb-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBack}
+            className="p-1"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <div className="flex">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Star
+                key={star}
+                className={`w-4 h-4 ${
+                  star <= rating
+                    ? "fill-yellow-400 text-yellow-400"
+                    : "text-gray-300"
+                }`}
+              />
+            ))}
+          </div>
+          <span className="text-sm text-muted-foreground ml-2">
+            {selectedAttributes.join(", ")}
+          </span>
+        </div>
+        <CardTitle>Share Your Experience</CardTitle>
         <CardDescription>
-          Share your experience with {employeeName} to help us improve our
-          services
+          Tell us more about your experience with {employeeName}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -142,91 +310,6 @@ export default function ReviewForm({
               onChange={(e) => setCustomerName(e.target.value)}
               placeholder="Enter your name"
             />
-          </div>
-
-          {/* Rating */}
-          <div className="space-y-2">
-            <Label>Rating</Label>
-            <Select
-              value={rating.toString()}
-              onValueChange={(value) => setRating(parseInt(value))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a rating" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="5">
-                  <div className="flex items-center gap-2">
-                    <div className="flex">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className="w-4 h-4 fill-yellow-400 text-yellow-400"
-                        />
-                      ))}
-                    </div>
-                    <span>5 - Excellent</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="4">
-                  <div className="flex items-center gap-2">
-                    <div className="flex">
-                      {[1, 2, 3, 4].map((star) => (
-                        <Star
-                          key={star}
-                          className="w-4 h-4 fill-yellow-400 text-yellow-400"
-                        />
-                      ))}
-                      <Star className="w-4 h-4 text-gray-300" />
-                    </div>
-                    <span>4 - Very Good</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="3">
-                  <div className="flex items-center gap-2">
-                    <div className="flex">
-                      {[1, 2, 3].map((star) => (
-                        <Star
-                          key={star}
-                          className="w-4 h-4 fill-yellow-400 text-yellow-400"
-                        />
-                      ))}
-                      {[4, 5].map((star) => (
-                        <Star key={star} className="w-4 h-4 text-gray-300" />
-                      ))}
-                    </div>
-                    <span>3 - Good</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="2">
-                  <div className="flex items-center gap-2">
-                    <div className="flex">
-                      {[1, 2].map((star) => (
-                        <Star
-                          key={star}
-                          className="w-4 h-4 fill-yellow-400 text-yellow-400"
-                        />
-                      ))}
-                      {[3, 4, 5].map((star) => (
-                        <Star key={star} className="w-4 h-4 text-gray-300" />
-                      ))}
-                    </div>
-                    <span>2 - Fair</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="1">
-                  <div className="flex items-center gap-2">
-                    <div className="flex">
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      {[2, 3, 4, 5].map((star) => (
-                        <Star key={star} className="w-4 h-4 text-gray-300" />
-                      ))}
-                    </div>
-                    <span>1 - Poor</span>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           {/* Review Text */}
