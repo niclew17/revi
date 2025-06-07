@@ -15,22 +15,36 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
   // Fetch employee data based on the unique link ID
   const { data: employee, error } = await supabase
     .from("employees")
-    .select(
-      `
-      *,
-      users(name, email),
-      company_info!inner(company_name, website)
-    `,
-    )
+    .select("*")
     .eq("unique_link_id", linkId)
-    .single();
+    .maybeSingle();
 
-  if (error || !employee) {
+  if (error) {
+    console.error("Employee fetch error:", error);
     return notFound();
   }
 
-  const companyName = employee.company_info?.company_name || "Company";
-  const employeeName = employee.name || "Technician";
+  if (!employee) {
+    console.error("Employee not found for linkId:", linkId);
+    return notFound();
+  }
+
+  // Fetch company info separately
+  const { data: companyInfo } = await supabase
+    .from("company_info")
+    .select("company_name, website")
+    .eq("user_id", employee.user_id)
+    .single();
+
+  // Fetch user info separately
+  const { data: userInfo } = await supabase
+    .from("users")
+    .select("name, email")
+    .eq("user_id", employee.user_id)
+    .single();
+
+  const companyName = companyInfo?.company_name || "Company";
+  const employeeName = employee.name || userInfo?.name || "Technician";
 
   return (
     <main className="min-h-screen bg-background">

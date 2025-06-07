@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -14,6 +14,7 @@ import {
 import { PlusCircle, Trash2, User, InfoIcon } from "lucide-react";
 import { addEmployee, deleteEmployee } from "@/app/actions";
 import { useToast } from "./ui/use-toast";
+import { useRouter } from "next/navigation";
 
 export type Employee = {
   id: string;
@@ -39,10 +40,16 @@ export default function EmployeeForm({
   isSubscribed,
 }: EmployeeFormProps) {
   const { toast } = useToast();
+  const router = useRouter();
   const [newEmployeeName, setNewEmployeeName] = useState("");
   const [newEmployeePosition, setNewEmployeePosition] = useState("");
   const [employeesList, setEmployeesList] = useState<Employee[]>(employees);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Update local state when props change (e.g., after page refresh)
+  useEffect(() => {
+    setEmployeesList(employees);
+  }, [employees]);
 
   const isAtLimit = employeesList.length >= employeeLimit;
   const planName = !isSubscribed
@@ -71,6 +78,8 @@ export default function EmployeeForm({
           title: "Success",
           description: "Employee added successfully",
         });
+        // Refresh the page data to ensure consistency
+        router.refresh();
       } else {
         toast({
           title: "Error",
@@ -91,13 +100,24 @@ export default function EmployeeForm({
 
   const handleDeleteEmployee = async (employeeId: string) => {
     try {
-      await deleteEmployee(employeeId);
-      setEmployeesList(employeesList.filter((emp) => emp.id !== employeeId));
-      toast({
-        title: "Success",
-        description: "Employee removed successfully",
-      });
+      const result = await deleteEmployee(employeeId);
+
+      if (result.success) {
+        // Only update UI after successful deletion
+        setEmployeesList(employeesList.filter((emp) => emp.id !== employeeId));
+        toast({
+          title: "Success",
+          description: "Employee removed successfully",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Failed to remove employee",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
+      console.error("Error deleting employee:", error);
       toast({
         title: "Error",
         description: "Failed to remove employee",
