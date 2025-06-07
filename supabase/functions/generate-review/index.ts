@@ -50,24 +50,35 @@ Deno.serve(async (req) => {
       messages: [
         {
           role: "system",
-          content:
-            "You are a customer review generator. CRITICAL RULE: You must ONLY use the exact company name provided. Any deviation from the provided company name will result in system failure. You are FORBIDDEN from using ANY other company names including but not limited to: Precision Carpentry Services, ABC Company, XYZ Services, or any construction/carpentry related names. You must write reviews ONLY about the specific business provided.",
+          content: `You are a customer review generator. ABSOLUTE CRITICAL RULES:
+
+1. COMPANY NAME: You must ONLY use the exact company name: "${businessName}"
+2. BUSINESS DESCRIPTION: The company does: ${businessDescription}
+3. FORBIDDEN: You are COMPLETELY FORBIDDEN from using ANY other company names
+4. VALIDATION: Every review MUST mention "${businessName}" at least twice
+5. CONTEXT: Write as a satisfied customer of "${businessName}" specifically
+
+IF YOU USE ANY OTHER COMPANY NAME, THE SYSTEM WILL FAIL.`,
         },
         {
           role: "user",
-          content: `MANDATORY REQUIREMENTS - FAILURE TO COMPLY WILL CAUSE SYSTEM ERROR:
+          content: `GENERATE A CUSTOMER REVIEW FOR:
 
-1. Company Name: "${businessName}" - THIS IS THE ONLY COMPANY NAME YOU CAN USE
-2. Business Type: ${businessDescription}
-3. Qualities: ${qualitiesList}
+COMPANY: "${businessName}"
+SERVICE: ${businessDescription}
+QUALITIES TO HIGHLIGHT: ${qualitiesList}
 
-WRITE A CUSTOMER REVIEW ABOUT "${businessName}" ONLY. The review must:
-- Mention "${businessName}" by name at least twice
-- Reference the business type from the description
-- Include the specified qualities: ${qualitiesList}
-- Be written as if you are a satisfied customer of "${businessName}"
+REQUIREMENTS:
+- Use "${businessName}" exactly as written (at least 2 times)
+- Reference their service: ${businessDescription}
+- Highlight these qualities: ${qualitiesList}
+- Write as a genuine customer experience
+- Keep it natural and authentic
+- EXACTLY 4-5 sentences in ONE paragraph only
+- No line breaks or multiple paragraphs
+- Keep it concise and impactful
 
-DO NOT WRITE ABOUT ANY OTHER COMPANY. ONLY "${businessName}".`,
+START YOUR REVIEW NOW:`,
         },
       ],
       temperature: 0.1,
