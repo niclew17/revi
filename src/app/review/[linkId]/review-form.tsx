@@ -13,9 +13,10 @@ import {
   CardTitle,
 } from "../../../components/ui/card";
 import { Checkbox } from "../../../components/ui/checkbox";
-import { Star, CheckCircle, ArrowLeft } from "lucide-react";
+import { Star, CheckCircle, ArrowLeft, Loader2 } from "lucide-react";
 import { submitReview } from "../../actions";
 import { useToast } from "../../../components/ui/use-toast";
+import { createClient } from "../../../../supabase/client";
 
 interface ReviewFormProps {
   employeeId: string;
@@ -30,13 +31,17 @@ export default function ReviewForm({
 }: ReviewFormProps) {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
-  const [customerName, setCustomerName] = useState("");
   const [reviewText, setReviewText] = useState("");
   const [rating, setRating] = useState<number>(0);
   const [selectedAttributes, setSelectedAttributes] = useState<string[]>([]);
+  const [selectedAdditionalAttributes, setSelectedAdditionalAttributes] =
+    useState<string[]>([]);
   const [platforms, setPlatforms] = useState<string[]>([]);
+  const [generatedReview, setGeneratedReview] = useState("");
+  const [isGeneratingReview, setIsGeneratingReview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [customerName, setCustomerName] = useState("");
 
   const attributes = [
     "Professional",
@@ -44,6 +49,14 @@ export default function ReviewForm({
     "Kind",
     "Precise",
     "Considerate",
+  ];
+
+  const additionalAttributes = [
+    "Cleanliness",
+    "Efficiency",
+    "Value for Money",
+    "Reliability",
+    "Friendliness",
   ];
 
   const handlePlatformChange = (platform: string, checked: boolean) => {
@@ -69,7 +82,17 @@ export default function ReviewForm({
     });
   };
 
-  const handleNextToFinalStep = () => {
+  const handleAdditionalAttributeToggle = (attribute: string) => {
+    setSelectedAdditionalAttributes((prev) => {
+      if (prev.includes(attribute)) {
+        return prev.filter((a) => a !== attribute);
+      } else {
+        return [...prev, attribute];
+      }
+    });
+  };
+
+  const handleNextToAdditionalAttributes = () => {
     if (selectedAttributes.length > 0) {
       setCurrentStep(3);
     } else {
@@ -78,6 +101,60 @@ export default function ReviewForm({
         description: "Choose what made your experience great.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleNextToReviewGeneration = () => {
+    if (selectedAdditionalAttributes.length > 0) {
+      setCurrentStep(4);
+      generateReview();
+    } else {
+      toast({
+        title: "Please select at least one additional attribute",
+        description:
+          "Choose additional qualities that describe your experience.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const generateReview = async () => {
+    setIsGeneratingReview(true);
+    try {
+      const supabase = createClient();
+      const allQualities = [
+        ...selectedAttributes,
+        ...selectedAdditionalAttributes,
+      ];
+
+      const { data, error } = await supabase.functions.invoke(
+        "supabase-functions-generate-review",
+        {
+          body: { selectedQualities: allQualities },
+        },
+      );
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data?.review) {
+        setGeneratedReview(data.review);
+        setReviewText(data.review);
+      } else {
+        throw new Error("No review generated");
+      }
+    } catch (error) {
+      console.error("Error generating review:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate review. Please try again.",
+        variant: "destructive",
+      });
+      // Allow user to continue with manual review
+      setReviewText("");
+    } finally {
+      setIsGeneratingReview(false);
     }
   };
 
@@ -102,10 +179,14 @@ export default function ReviewForm({
     setIsSubmitting(true);
 
     try {
+      const allAttributes = [
+        ...selectedAttributes,
+        ...selectedAdditionalAttributes,
+      ];
       const result = await submitReview({
         employeeId,
         customerName: customerName.trim() || undefined,
-        reviewText: `${reviewText.trim()}\n\nAttributes: ${selectedAttributes.join(", ")}`,
+        reviewText: `${reviewText.trim()}\n\nAttributes: ${allAttributes.join(", ")}`,
         rating,
         platforms,
       });
@@ -253,7 +334,7 @@ export default function ReviewForm({
           </div>
           <div className="mt-6">
             <Button
-              onClick={handleNextToFinalStep}
+              onClick={handleNextToAdditionalAttributes}
               className="w-full"
               disabled={selectedAttributes.length === 0}
             >
@@ -265,7 +346,80 @@ export default function ReviewForm({
     );
   }
 
-  // Step 3: Review Details
+  // Step 3: Additional Attribute Selection
+  if (currentStep === 3) {
+    return (
+      <Card className="bg-white">
+        <CardHeader>
+          <div className="flex items-center gap-2 mb-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBack}
+              className="p-1"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+            <div className="flex">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star
+                  key={star}
+                  className={`w-4 h-4 ${
+                    star <= rating
+                      ? "fill-yellow-400 text-yellow-400"
+                      : "text-gray-300"
+                  }`}
+                />
+              ))}
+            </div>
+            <span className="text-sm text-muted-foreground ml-2">
+              {selectedAttributes.join(", ")}
+            </span>
+          </div>
+          <CardTitle>Additional qualities</CardTitle>
+          <CardDescription>
+            Select additional attributes that describe {employeeName}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-4">
+            {additionalAttributes.map((attribute) => (
+              <div
+                key={attribute}
+                className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                  selectedAdditionalAttributes.includes(attribute)
+                    ? "border-primary bg-primary/5"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+                onClick={() => handleAdditionalAttributeToggle(attribute)}
+              >
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    checked={selectedAdditionalAttributes.includes(attribute)}
+                    onChange={() => handleAdditionalAttributeToggle(attribute)}
+                  />
+                  <Label className="text-base font-medium cursor-pointer">
+                    {attribute}
+                  </Label>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6">
+            <Button
+              onClick={handleNextToReviewGeneration}
+              className="w-full"
+              disabled={selectedAdditionalAttributes.length === 0}
+            >
+              Generate Review
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Step 4: Review Generation and Final Details
   return (
     <Card className="bg-white">
       <CardHeader>
@@ -291,92 +445,113 @@ export default function ReviewForm({
             ))}
           </div>
           <span className="text-sm text-muted-foreground ml-2">
-            {selectedAttributes.join(", ")}
+            {[...selectedAttributes, ...selectedAdditionalAttributes].join(
+              ", ",
+            )}
           </span>
         </div>
-        <CardTitle>Share Your Experience</CardTitle>
+        <CardTitle>Your Review</CardTitle>
         <CardDescription>
-          Tell us more about your experience with {employeeName}
+          {isGeneratingReview
+            ? "We're generating your review based on the selected qualities..."
+            : "Review the generated text and make any edits before submitting"}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Customer Name */}
-          <div className="space-y-2">
-            <Label htmlFor="customerName">Your Name (Optional)</Label>
-            <Input
-              id="customerName"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              placeholder="Enter your name"
-            />
-          </div>
-
-          {/* Review Text */}
-          <div className="space-y-2">
-            <Label htmlFor="reviewText">Your Review *</Label>
-            <Textarea
-              id="reviewText"
-              value={reviewText}
-              onChange={(e) => setReviewText(e.target.value)}
-              placeholder="Tell us about your experience with our service..."
-              rows={4}
-              required
-            />
-          </div>
-
-          {/* Platform Selection */}
-          <div className="space-y-3">
-            <Label>Where would you like to share this review? (Optional)</Label>
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="google"
-                  checked={platforms.includes("google")}
-                  onCheckedChange={(checked) =>
-                    handlePlatformChange("google", checked as boolean)
-                  }
-                />
-                <Label htmlFor="google" className="text-sm font-normal">
-                  Google Reviews
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="facebook"
-                  checked={platforms.includes("facebook")}
-                  onCheckedChange={(checked) =>
-                    handlePlatformChange("facebook", checked as boolean)
-                  }
-                />
-                <Label htmlFor="facebook" className="text-sm font-normal">
-                  Facebook
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="instagram"
-                  checked={platforms.includes("instagram")}
-                  onCheckedChange={(checked) =>
-                    handlePlatformChange("instagram", checked as boolean)
-                  }
-                />
-                <Label htmlFor="instagram" className="text-sm font-normal">
-                  Instagram
-                </Label>
-              </div>
+        {isGeneratingReview ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+              <p className="text-muted-foreground">Generating your review...</p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Select the platforms where you'd like to share your review. We'll
-              help you post it there.
-            </p>
           </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Customer Name */}
+            <div className="space-y-2">
+              <Label htmlFor="customerName">Your Name (Optional)</Label>
+              <Input
+                id="customerName"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder="Enter your name"
+              />
+            </div>
 
-          {/* Submit Button */}
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Submitting..." : "Submit Review"}
-          </Button>
-        </form>
+            {/* Review Text */}
+            <div className="space-y-2">
+              <Label htmlFor="reviewText">Your Review *</Label>
+              <Textarea
+                id="reviewText"
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+                placeholder="Tell us about your experience with our service..."
+                rows={6}
+                required
+              />
+              {generatedReview && (
+                <p className="text-xs text-muted-foreground">
+                  This review was generated based on your selected qualities.
+                  Feel free to edit it to better reflect your experience.
+                </p>
+              )}
+            </div>
+
+            {/* Platform Selection */}
+            <div className="space-y-3">
+              <Label>
+                Where would you like to share this review? (Optional)
+              </Label>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="google"
+                    checked={platforms.includes("google")}
+                    onCheckedChange={(checked) =>
+                      handlePlatformChange("google", checked as boolean)
+                    }
+                  />
+                  <Label htmlFor="google" className="text-sm font-normal">
+                    Google Reviews
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="facebook"
+                    checked={platforms.includes("facebook")}
+                    onCheckedChange={(checked) =>
+                      handlePlatformChange("facebook", checked as boolean)
+                    }
+                  />
+                  <Label htmlFor="facebook" className="text-sm font-normal">
+                    Facebook
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="instagram"
+                    checked={platforms.includes("instagram")}
+                    onCheckedChange={(checked) =>
+                      handlePlatformChange("instagram", checked as boolean)
+                    }
+                  />
+                  <Label htmlFor="instagram" className="text-sm font-normal">
+                    Instagram
+                  </Label>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Select the platforms where you'd like to share your review.
+                We'll help you post it there.
+              </p>
+            </div>
+
+            {/* Submit Button */}
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? "Submitting..." : "Submit Review"}
+            </Button>
+          </form>
+        )}
       </CardContent>
     </Card>
   );
