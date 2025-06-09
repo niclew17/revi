@@ -43,6 +43,39 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
     console.error("Error fetching company info:", companyError);
   }
 
+  // Generate dynamic attributes from company website
+  let dynamicAttributes: string[] = [];
+  let dynamicAdditionalAttributes: string[] = [];
+  if (companyInfo?.website) {
+    try {
+      const { data: attributesData, error: attributesError } =
+        await supabase.functions.invoke(
+          "supabase-functions-generate-attributes",
+          {
+            body: {
+              url: companyInfo.website,
+            },
+          },
+        );
+
+      if (attributesError) {
+        console.error("Error generating attributes:", attributesError);
+      } else if (
+        attributesData?.attributeSet1 &&
+        attributesData?.attributeSet2
+      ) {
+        dynamicAttributes = attributesData.attributeSet1;
+        dynamicAdditionalAttributes = attributesData.attributeSet2;
+        console.log("Generated attributes:", {
+          attributeSet1: dynamicAttributes,
+          attributeSet2: dynamicAdditionalAttributes,
+        });
+      }
+    } catch (error) {
+      console.error("Failed to generate attributes:", error);
+    }
+  }
+
   // Fetch user info separately
   const { data: userInfo } = await supabase
     .from("users")
@@ -68,6 +101,8 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
           employeeName={employeeName}
           companyName={companyName}
           businessDescription={companyInfo?.business_description || ""}
+          dynamicAttributes={dynamicAttributes}
+          dynamicAdditionalAttributes={dynamicAdditionalAttributes}
         />
       </div>
     </main>

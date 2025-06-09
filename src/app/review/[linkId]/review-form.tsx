@@ -23,6 +23,8 @@ interface ReviewFormProps {
   employeeName: string;
   companyName: string;
   businessDescription: string;
+  dynamicAttributes?: string[];
+  dynamicAdditionalAttributes?: string[];
 }
 
 export default function ReviewForm({
@@ -30,6 +32,8 @@ export default function ReviewForm({
   employeeName,
   companyName,
   businessDescription,
+  dynamicAttributes = [],
+  dynamicAdditionalAttributes = [],
 }: ReviewFormProps) {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
@@ -45,7 +49,8 @@ export default function ReviewForm({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [customerName, setCustomerName] = useState("");
 
-  const attributes = [
+  // Use dynamic attributes if available, otherwise fall back to default ones
+  const defaultAttributes = [
     "Professional",
     "Timely",
     "Kind",
@@ -53,13 +58,21 @@ export default function ReviewForm({
     "Considerate",
   ];
 
-  const additionalAttributes = [
+  const defaultAdditionalAttributes = [
     "Cleanliness",
     "Efficiency",
     "Value for Money",
     "Reliability",
     "Friendliness",
   ];
+
+  const attributes =
+    dynamicAttributes.length > 0 ? dynamicAttributes : defaultAttributes;
+
+  const additionalAttributes =
+    dynamicAdditionalAttributes.length > 0
+      ? dynamicAdditionalAttributes
+      : defaultAdditionalAttributes;
 
   const handlePlatformChange = (platform: string, checked: boolean) => {
     if (checked) {
