@@ -25,6 +25,7 @@ interface ReviewFormProps {
   businessDescription: string;
   dynamicAttributes?: string[];
   dynamicAdditionalAttributes?: string[];
+  googleReviewLink?: string;
 }
 
 export default function ReviewForm({
@@ -34,6 +35,7 @@ export default function ReviewForm({
   businessDescription,
   dynamicAttributes = [],
   dynamicAdditionalAttributes = [],
+  googleReviewLink = "",
 }: ReviewFormProps) {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
@@ -42,12 +44,10 @@ export default function ReviewForm({
   const [selectedAttributes, setSelectedAttributes] = useState<string[]>([]);
   const [selectedAdditionalAttributes, setSelectedAdditionalAttributes] =
     useState<string[]>([]);
-  const [platforms, setPlatforms] = useState<string[]>([]);
   const [generatedReview, setGeneratedReview] = useState("");
   const [isGeneratingReview, setIsGeneratingReview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [customerName, setCustomerName] = useState("");
 
   // Use dynamic attributes if available, otherwise fall back to default ones
   const defaultAttributes = [
@@ -73,14 +73,6 @@ export default function ReviewForm({
     dynamicAdditionalAttributes.length > 0
       ? dynamicAdditionalAttributes
       : defaultAdditionalAttributes;
-
-  const handlePlatformChange = (platform: string, checked: boolean) => {
-    if (checked) {
-      setPlatforms([...platforms, platform]);
-    } else {
-      setPlatforms(platforms.filter((p) => p !== platform));
-    }
-  };
 
   const handleRatingSelect = (selectedRating: number) => {
     setRating(selectedRating);
@@ -190,13 +182,11 @@ export default function ReviewForm({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleSubmit = async () => {
     if (!reviewText.trim()) {
       toast({
         title: "Error",
-        description: "Please write a review before submitting.",
+        description: "No review was generated. Please try again.",
         variant: "destructive",
       });
       return;
@@ -205,24 +195,30 @@ export default function ReviewForm({
     setIsSubmitting(true);
 
     try {
+      // Copy the review text to clipboard
+      await navigator.clipboard.writeText(reviewText.trim());
+
+      // Save the review to database for tracking
       const allAttributes = [
         ...selectedAttributes,
         ...selectedAdditionalAttributes,
       ];
       const result = await submitReview({
         employeeId,
-        customerName: customerName.trim() || undefined,
         reviewText: `${reviewText.trim()}\n\nAttributes: ${allAttributes.join(", ")}`,
         rating,
-        platforms,
+        platforms: ["google"], // Always Google since we're redirecting there
       });
 
       if (result.success) {
-        setIsSubmitted(true);
         toast({
-          title: "Thank you!",
-          description: "Your review has been submitted successfully.",
+          title: "Review copied!",
+          description:
+            "Your review has been copied to clipboard. You'll be redirected to Google Reviews.",
         });
+
+        // Set submitted state and show success message
+        setIsSubmitted(true);
       } else {
         toast({
           title: "Error",
@@ -232,11 +228,15 @@ export default function ReviewForm({
         });
       }
     } catch (error) {
+      console.error("Error copying to clipboard:", error);
       toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
+        title: "Review ready!",
+        description:
+          "Your review is ready. You'll be redirected to Google Reviews.",
       });
+
+      // Set submitted state even if clipboard fails
+      setIsSubmitted(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -252,13 +252,25 @@ export default function ReviewForm({
             </div>
             <h2 className="text-2xl font-semibold mb-2">Thank You!</h2>
             <p className="text-muted-foreground mb-4">
-              Your review for {employeeName} at {companyName} has been submitted
-              successfully.
+              Your review for {employeeName} at {companyName} has been copied to
+              your clipboard.
             </p>
-            <p className="text-sm text-muted-foreground">
-              We appreciate your feedback and will use it to improve our
-              services.
+            <p className="text-sm text-muted-foreground mb-4">
+              Click the button below to open Google Reviews and paste your
+              review.
             </p>
+            {googleReviewLink ? (
+              <Button
+                onClick={() => window.open(googleReviewLink, "_blank")}
+                className="mt-4"
+              >
+                Open Google Reviews
+              </Button>
+            ) : (
+              <p className="text-sm text-red-600">
+                No Google Review link available. Please contact the business.
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -480,7 +492,7 @@ export default function ReviewForm({
         <CardDescription>
           {isGeneratingReview
             ? "We're generating your review based on the selected qualities..."
-            : "Review the generated text and make any edits before submitting"}
+            : "Review the generated text below and make any changes you'd like, then submit to copy it to your clipboard."}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -492,91 +504,52 @@ export default function ReviewForm({
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Customer Name */}
+          <div className="space-y-6">
+            {/* Review Text - Editable */}
             <div className="space-y-2">
-              <Label htmlFor="customerName">Your Name (Optional)</Label>
-              <Input
-                id="customerName"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                placeholder="Enter your name"
-              />
-            </div>
-
-            {/* Review Text */}
-            <div className="space-y-2">
-              <Label htmlFor="reviewText">Your Review *</Label>
+              <Label htmlFor="reviewText">Your Generated Review</Label>
               <Textarea
                 id="reviewText"
                 value={reviewText}
                 onChange={(e) => setReviewText(e.target.value)}
-                placeholder="Tell us about your experience with our service..."
                 rows={6}
-                required
+                placeholder="Your review will appear here..."
               />
               {generatedReview && (
                 <p className="text-xs text-muted-foreground">
                   This review was generated based on your selected qualities.
-                  Feel free to edit it to better reflect your experience.
+                  You can edit it before submitting.
                 </p>
               )}
             </div>
 
-            {/* Platform Selection */}
-            <div className="space-y-3">
-              <Label>
-                Where would you like to share this review? (Optional)
-              </Label>
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="google"
-                    checked={platforms.includes("google")}
-                    onCheckedChange={(checked) =>
-                      handlePlatformChange("google", checked as boolean)
-                    }
-                  />
-                  <Label htmlFor="google" className="text-sm font-normal">
-                    Google Reviews
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="facebook"
-                    checked={platforms.includes("facebook")}
-                    onCheckedChange={(checked) =>
-                      handlePlatformChange("facebook", checked as boolean)
-                    }
-                  />
-                  <Label htmlFor="facebook" className="text-sm font-normal">
-                    Facebook
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="instagram"
-                    checked={platforms.includes("instagram")}
-                    onCheckedChange={(checked) =>
-                      handlePlatformChange("instagram", checked as boolean)
-                    }
-                  />
-                  <Label htmlFor="instagram" className="text-sm font-normal">
-                    Instagram
-                  </Label>
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Select the platforms where you'd like to share your review.
-                We'll help you post it there.
-              </p>
-            </div>
-
             {/* Submit Button */}
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Submitting..." : "Submit Review"}
-            </Button>
-          </form>
+            <div className="space-y-4">
+              <Button
+                onClick={handleSubmit}
+                className="w-full"
+                disabled={!reviewText.trim() || isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    Copying Review...
+                  </>
+                ) : (
+                  "Copy Review & Go to Google Reviews"
+                )}
+              </Button>
+
+              {/* Info about what happens next */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800">
+                  <strong>What happens next:</strong> Your review will be copied
+                  to your clipboard and Google Reviews will open in a new tab
+                  where you can paste and post it.
+                </p>
+              </div>
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>

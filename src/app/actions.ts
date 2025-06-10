@@ -280,7 +280,7 @@ export const updateCompanyInfo = async (input: CompanyInfoInput) => {
           website,
           email,
           business_description: businessDescription,
-          google_reviews_url: googleReviewsUrl,
+          google_review_link: googleReviewsUrl,
           facebook_url: facebookUrl,
           instagram_url: instagramUrl,
         })
@@ -301,7 +301,7 @@ export const updateCompanyInfo = async (input: CompanyInfoInput) => {
         website,
         email,
         business_description: businessDescription,
-        google_reviews_url: googleReviewsUrl,
+        google_review_link: googleReviewsUrl,
         facebook_url: facebookUrl,
         instagram_url: instagramUrl,
       });

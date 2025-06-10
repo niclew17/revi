@@ -16,6 +16,7 @@ export type Database = {
           created_at: string | null
           email: string | null
           facebook_url: string | null
+          google_review_link: string | null
           google_reviews_url: string | null
           id: string
           instagram_url: string | null
@@ -29,6 +30,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           facebook_url?: string | null
+          google_review_link?: string | null
           google_reviews_url?: string | null
           id?: string
           instagram_url?: string | null
@@ -42,6 +44,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           facebook_url?: string | null
+          google_review_link?: string | null
           google_reviews_url?: string | null
           id?: string
           instagram_url?: string | null

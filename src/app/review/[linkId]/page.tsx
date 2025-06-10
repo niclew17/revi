@@ -32,7 +32,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
   // Fetch company info separately
   const { data: companyInfo, error: companyError } = await supabase
     .from("company_info")
-    .select("company_name, website, business_description")
+    .select("company_name, website, business_description, google_review_link")
     .eq("user_id", employee.user_id)
     .single();
 
@@ -103,6 +103,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
           businessDescription={companyInfo?.business_description || ""}
           dynamicAttributes={dynamicAttributes}
           dynamicAdditionalAttributes={dynamicAdditionalAttributes}
+          googleReviewLink={companyInfo?.google_review_link || ""}
         />
       </div>
     </main>
