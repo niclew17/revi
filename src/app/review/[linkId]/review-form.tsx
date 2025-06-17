@@ -41,6 +41,7 @@ export default function ReviewForm({
   const [currentStep, setCurrentStep] = useState(1);
   const [reviewText, setReviewText] = useState("");
   const [rating, setRating] = useState<number>(0);
+  const [experienceLevel, setExperienceLevel] = useState<string>("");
   const [selectedAttributes, setSelectedAttributes] = useState<string[]>([]);
   const [selectedAdditionalAttributes, setSelectedAdditionalAttributes] =
     useState<string[]>([]);
@@ -75,13 +76,16 @@ export default function ReviewForm({
       ? dynamicAdditionalAttributes
       : defaultAdditionalAttributes;
 
-  const handleRatingSelect = (selectedRating: number) => {
-    setRating(selectedRating);
-    if (selectedRating <= 3) {
+  const handleExperienceSelect = (experience: string) => {
+    setExperienceLevel(experience);
+    if (experience === "poor") {
       setIsLowRating(true);
+      setRating(2); // Set a low rating for database purposes
       setCurrentStep(4); // Skip to review writing step
     } else {
       setIsLowRating(false);
+      // Set rating based on experience level for database purposes
+      setRating(experience === "moderate" ? 4 : 5);
       setCurrentStep(2); // Continue with attribute selection
     }
   };
@@ -187,8 +191,8 @@ export default function ReviewForm({
 
   const handleBack = () => {
     if (currentStep > 1) {
-      // If user is on review writing step (step 4) and has a low rating,
-      // go directly back to rating selection (step 1)
+      // If user is on review writing step (step 4) and has a poor experience,
+      // go directly back to experience selection (step 1)
       if (currentStep === 4 && isLowRating) {
         setCurrentStep(1);
       } else {
@@ -296,7 +300,7 @@ export default function ReviewForm({
     );
   }
 
-  // Step 1: Rating Selection
+  // Step 1: Experience Selection
   if (currentStep === 1) {
     return (
       <Card className="bg-white">
@@ -307,26 +311,43 @@ export default function ReviewForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex justify-center space-x-2 py-8">
-            {[1, 2, 3, 4, 5].map((star) => (
+          <div className="space-y-4 py-8">
+            {[
+              {
+                value: "poor",
+                label: "Poor",
+                color:
+                  "bg-red-50 border-red-300 hover:border-red-400 text-red-900 hover:bg-red-100",
+              },
+              {
+                value: "moderate",
+                label: "Moderate",
+                color:
+                  "bg-amber-50 border-amber-300 hover:border-amber-400 text-amber-900 hover:bg-amber-100",
+              },
+              {
+                value: "excellent",
+                label: "Excellent",
+                color:
+                  "bg-emerald-50 border-emerald-300 hover:border-emerald-400 text-emerald-900 hover:bg-emerald-100",
+              },
+            ].map((option) => (
               <button
-                key={star}
+                key={option.value}
                 type="button"
-                onClick={() => handleRatingSelect(star)}
-                className="transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
+                onClick={() => handleExperienceSelect(option.value)}
+                className={`w-full p-4 border-2 rounded-lg transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                  experienceLevel === option.value
+                    ? `${option.color} border-opacity-100`
+                    : `${option.color} border-opacity-50`
+                }`}
               >
-                <Star
-                  className={`w-12 h-12 ${
-                    star <= rating
-                      ? "fill-yellow-400 text-yellow-400"
-                      : "text-gray-300 hover:text-yellow-200"
-                  }`}
-                />
+                <span className="text-lg font-semibold">{option.label}</span>
               </button>
             ))}
           </div>
           <div className="text-center text-sm text-muted-foreground">
-            Click a star to rate your experience
+            Select how you would rate your experience
           </div>
         </CardContent>
       </Card>
