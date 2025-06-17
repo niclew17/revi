@@ -9,8 +9,16 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
-import { Link, Copy, CheckCircle, User, ExternalLink } from "lucide-react";
+import {
+  Link,
+  Copy,
+  CheckCircle,
+  User,
+  ExternalLink,
+  QrCode,
+} from "lucide-react";
 import { useToast } from "./ui/use-toast";
+import { QRCodeSVG } from "qrcode.react";
 
 export type Employee = {
   id: string;
@@ -29,6 +37,7 @@ interface ReviewLinksProps {
 export default function ReviewLinks({ employees }: ReviewLinksProps) {
   const { toast } = useToast();
   const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
+  const [showQRCode, setShowQRCode] = useState<string | null>(null);
 
   const copyToClipboard = (linkId: string) => {
     const baseUrl = window.location.origin;
@@ -46,6 +55,10 @@ export default function ReviewLinks({ employees }: ReviewLinksProps) {
     const baseUrl = window.location.origin;
     const fullLink = `${baseUrl}/review/${linkId}`;
     window.open(fullLink, "_blank");
+  };
+
+  const toggleQRCode = (linkId: string) => {
+    setShowQRCode(showQRCode === linkId ? null : linkId);
   };
 
   return (
@@ -118,6 +131,15 @@ export default function ReviewLinks({ employees }: ReviewLinksProps) {
                       <Button
                         variant="outline"
                         size="sm"
+                        onClick={() => toggleQRCode(employee.unique_link_id)}
+                        className="flex items-center gap-1"
+                      >
+                        <QrCode className="h-4 w-4" />
+                        <span className="hidden sm:inline">QR</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => openLink(employee.unique_link_id)}
                         className="flex items-center gap-1"
                       >
@@ -126,6 +148,21 @@ export default function ReviewLinks({ employees }: ReviewLinksProps) {
                       </Button>
                     </div>
                   </div>
+                  {showQRCode === employee.unique_link_id && (
+                    <div className="mt-4 pt-4 border-t flex flex-col items-center gap-3">
+                      <div className="bg-white p-4 rounded-lg border">
+                        <QRCodeSVG
+                          value={reviewUrl}
+                          size={200}
+                          level="M"
+                          includeMargin={true}
+                        />
+                      </div>
+                      <p className="text-sm text-muted-foreground text-center">
+                        Scan this QR code to access the review link
+                      </p>
+                    </div>
+                  )}
                 </div>
               );
             })}

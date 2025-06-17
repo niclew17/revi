@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
@@ -38,6 +38,7 @@ export default function ReviewForm({
   googleReviewLink = "",
 }: ReviewFormProps) {
   const { toast } = useToast();
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
   const [reviewText, setReviewText] = useState("");
   const [rating, setRating] = useState<number>(0);
@@ -75,6 +76,15 @@ export default function ReviewForm({
     dynamicAdditionalAttributes.length > 0
       ? dynamicAdditionalAttributes
       : defaultAdditionalAttributes;
+
+  // Simulate initial loading to show loading indicator
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialLoading(false);
+    }, 1500); // Show loading for 1.5 seconds
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleExperienceSelect = (experience: string) => {
     setExperienceLevel(experience);
@@ -264,6 +274,27 @@ export default function ReviewForm({
       setIsSubmitting(false);
     }
   };
+
+  // Show loading indicator when form is initially loading
+  if (isInitialLoading) {
+    return (
+      <Card className="bg-white">
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-center py-16">
+            <div className="text-center">
+              <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-primary" />
+              <h2 className="text-xl font-semibold mb-2">
+                Loading Review Form
+              </h2>
+              <p className="text-muted-foreground">
+                Preparing your review experience for {employeeName}...
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (isSubmitted) {
     return (

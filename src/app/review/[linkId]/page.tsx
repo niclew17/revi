@@ -34,7 +34,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
     .from("company_info")
     .select("company_name, website, business_description, google_review_link")
     .eq("user_id", employee.user_id)
-    .single();
+    .maybeSingle();
 
   // Log company info for debugging
   console.log("Company info fetched:", companyInfo);
