@@ -13,11 +13,13 @@ export async function GET(request: Request) {
 
     if (error) {
       console.error("Error exchanging code for session:", error);
+      // Use the request URL's origin for error redirects too
+      const baseUrl = new URL(request.url).origin;
       return NextResponse.redirect(
         new URL(
           "/sign-in?error=" +
             encodeURIComponent("Verification failed. Please try again."),
-          process.env.NEXT_PUBLIC_SITE_URL || "https://www.getrevio.io",
+          baseUrl,
         ),
       );
     }
@@ -32,11 +34,11 @@ export async function GET(request: Request) {
   }
 
   // URL to redirect to after sign in process completes
-  // For email verification, redirect to sign-in page
-  const redirectTo =
-    type === "signup" ? "/sign-in" : redirect_to || "/dashboard";
+  // Always redirect to dashboard after successful verification
+  const redirectTo = redirect_to || "/dashboard";
 
-  // Use production URL for redirects
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.getrevio.io";
+  // Use the request URL's origin for redirects to ensure proper domain
+  const baseUrl = new URL(request.url).origin;
+  console.log("Redirecting to:", redirectTo, "with base URL:", baseUrl);
   return NextResponse.redirect(new URL(redirectTo, baseUrl));
 }

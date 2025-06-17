@@ -48,6 +48,7 @@ export default function ReviewForm({
   const [isGeneratingReview, setIsGeneratingReview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLowRating, setIsLowRating] = useState(false);
 
   // Use dynamic attributes if available, otherwise fall back to default ones
   const defaultAttributes = [
@@ -76,7 +77,13 @@ export default function ReviewForm({
 
   const handleRatingSelect = (selectedRating: number) => {
     setRating(selectedRating);
-    setCurrentStep(2);
+    if (selectedRating <= 3) {
+      setIsLowRating(true);
+      setCurrentStep(4); // Skip to review writing step
+    } else {
+      setIsLowRating(false);
+      setCurrentStep(2); // Continue with attribute selection
+    }
   };
 
   const handleAttributeToggle = (attribute: string) => {
@@ -114,7 +121,9 @@ export default function ReviewForm({
   const handleNextToReviewGeneration = () => {
     if (selectedAdditionalAttributes.length > 0) {
       setCurrentStep(4);
-      generateReview();
+      if (!isLowRating) {
+        generateReview();
+      }
     } else {
       toast({
         title: "Please select at least one additional attribute",
@@ -178,7 +187,13 @@ export default function ReviewForm({
 
   const handleBack = () => {
     if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
+      // If user is on review writing step (step 4) and has a low rating,
+      // go directly back to rating selection (step 1)
+      if (currentStep === 4 && isLowRating) {
+        setCurrentStep(1);
+      } else {
+        setCurrentStep(currentStep - 1);
+      }
     }
   };
 
@@ -203,9 +218,13 @@ export default function ReviewForm({
         ...selectedAttributes,
         ...selectedAdditionalAttributes,
       ];
+      const reviewTextToSave = isLowRating
+        ? reviewText.trim()
+        : `${reviewText.trim()}\n\nAttributes: ${allAttributes.join(", ")}`;
+
       const result = await submitReview({
         employeeId,
-        reviewText: `${reviewText.trim()}\n\nAttributes: ${allAttributes.join(", ")}`,
+        reviewText: reviewTextToSave,
         rating,
         platforms: ["google"], // Always Google since we're redirecting there
       });
@@ -490,13 +509,15 @@ export default function ReviewForm({
         </div>
         <CardTitle>Your Review</CardTitle>
         <CardDescription>
-          {isGeneratingReview
-            ? "We're generating your review based on the selected qualities..."
-            : "Review the generated text below and make any changes you'd like, then submit to copy it to your clipboard."}
+          {isLowRating
+            ? "Please write your review below and we'll help you post it to Google Reviews."
+            : isGeneratingReview
+              ? "We're generating your review based on the selected qualities..."
+              : "Review the generated text below and make any changes you'd like, then submit to copy it to your clipboard."}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {isGeneratingReview ? (
+        {isGeneratingReview && !isLowRating ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
@@ -507,15 +528,21 @@ export default function ReviewForm({
           <div className="space-y-6">
             {/* Review Text - Editable */}
             <div className="space-y-2">
-              <Label htmlFor="reviewText">Your Generated Review</Label>
+              <Label htmlFor="reviewText">
+                {isLowRating ? "Write Your Review" : "Your Generated Review"}
+              </Label>
               <Textarea
                 id="reviewText"
                 value={reviewText}
                 onChange={(e) => setReviewText(e.target.value)}
                 rows={6}
-                placeholder="Your review will appear here..."
+                placeholder={
+                  isLowRating
+                    ? "Please share your experience..."
+                    : "Your review will appear here..."
+                }
               />
-              {generatedReview && (
+              {generatedReview && !isLowRating && (
                 <p className="text-xs text-muted-foreground">
                   This review was generated based on your selected qualities.
                   You can edit it before submitting.
