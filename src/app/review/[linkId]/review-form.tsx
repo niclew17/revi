@@ -247,11 +247,15 @@ export default function ReviewForm({
         toast({
           title: "Review copied!",
           description:
-            "Your review has been copied to clipboard. You'll be redirected to Google Reviews.",
+            "Your review has been copied to clipboard. Redirecting to Google Reviews...",
         });
 
-        // Set submitted state and show success message
-        setIsSubmitted(true);
+        // Redirect directly to Google Reviews after a short delay
+        setTimeout(() => {
+          if (googleReviewLink) {
+            window.open(googleReviewLink, "_blank");
+          }
+        }, 1000);
       } else {
         toast({
           title: "Error",
@@ -264,12 +268,15 @@ export default function ReviewForm({
       console.error("Error copying to clipboard:", error);
       toast({
         title: "Review ready!",
-        description:
-          "Your review is ready. You'll be redirected to Google Reviews.",
+        description: "Your review is ready. Redirecting to Google Reviews...",
       });
 
-      // Set submitted state even if clipboard fails
-      setIsSubmitted(true);
+      // Redirect to Google Reviews even if clipboard fails
+      setTimeout(() => {
+        if (googleReviewLink) {
+          window.open(googleReviewLink, "_blank");
+        }
+      }, 1000);
     } finally {
       setIsSubmitting(false);
     }
