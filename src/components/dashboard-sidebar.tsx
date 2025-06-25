@@ -2,8 +2,7 @@
 
 import { Building2, Users, Link } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { usePathname } from "next/navigation";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 interface DashboardSidebarProps {
   onNavigate?: () => void;

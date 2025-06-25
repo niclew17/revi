@@ -26,9 +26,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (!businessName || !businessDescription) {
+    if (!businessName) {
       return new Response(
-        JSON.stringify({ error: "Business name and description are required" }),
+        JSON.stringify({ error: "Business name is required" }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 400,
@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
           content: `You are a customer review generator. ABSOLUTE CRITICAL RULES:
 
 1. COMPANY NAME: You must ONLY use the exact company name: "${businessName}"
-2. BUSINESS DESCRIPTION: The company does: ${businessDescription}
+2. BUSINESS DESCRIPTION: The company does: ${businessDescription || "various services"}
 3. FORBIDDEN: You are COMPLETELY FORBIDDEN from using ANY other company names
 4. VALIDATION: Every review MUST mention "${businessName}" at least twice
 5. CONTEXT: Write as a satisfied customer of "${businessName}" specifically
@@ -65,12 +65,12 @@ IF YOU USE ANY OTHER COMPANY NAME, THE SYSTEM WILL FAIL.`,
           content: `GENERATE A CUSTOMER REVIEW FOR:
 
 COMPANY: "${businessName}"
-SERVICE: ${businessDescription}
+SERVICE: ${businessDescription || "their services"}
 QUALITIES TO HIGHLIGHT: ${qualitiesList}
 
 REQUIREMENTS:
 - Use "${businessName}" exactly as written (at least 2 times)
-- Reference their service: ${businessDescription}
+- Reference their service: ${businessDescription || "their services"}
 - Highlight these qualities: ${qualitiesList}
 - Write as a genuine customer experience
 - Keep it natural and authentic

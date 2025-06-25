@@ -79,12 +79,36 @@ export default function ReviewForm({
 
   // Simulate initial loading to show loading indicator
   useEffect(() => {
+    // Log initial component mount for debugging
+    console.log("=== REVIEW FORM MOUNT DEBUG ===");
+    console.log("Props received:", {
+      employeeId,
+      employeeName,
+      companyName,
+      businessDescription,
+      dynamicAttributes,
+      dynamicAdditionalAttributes,
+      googleReviewLink,
+    });
+    console.log("User Agent:", navigator.userAgent);
+    console.log("Current URL:", window.location.href);
+    console.log("Referrer:", document.referrer);
+    console.log("=== END MOUNT DEBUG ===");
+
     const timer = setTimeout(() => {
       setIsInitialLoading(false);
     }, 1500); // Show loading for 1.5 seconds
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [
+    employeeId,
+    employeeName,
+    companyName,
+    businessDescription,
+    dynamicAttributes,
+    dynamicAdditionalAttributes,
+    googleReviewLink,
+  ]);
 
   const handleExperienceSelect = (experience: string) => {
     setExperienceLevel(experience);
@@ -157,41 +181,108 @@ export default function ReviewForm({
         ...selectedAdditionalAttributes,
       ];
 
-      // Log the data being sent to verify it's correct
-      console.log("Sending to edge function:", {
+      // Enhanced logging to debug QR code vs direct access
+      console.log("=== REVIEW GENERATION DEBUG ===");
+      console.log("User Agent:", navigator.userAgent);
+      console.log("Referrer:", document.referrer);
+      console.log("Current URL:", window.location.href);
+      console.log("Selected Attributes:", selectedAttributes);
+      console.log(
+        "Selected Additional Attributes:",
+        selectedAdditionalAttributes,
+      );
+      console.log("All Qualities:", allQualities);
+      console.log("Company Name:", companyName);
+      console.log("Business Description:", businessDescription);
+      console.log("Employee ID:", employeeId);
+
+      // CRITICAL: Log the exact payload being sent to edge function
+      const payloadToSend = {
         selectedQualities: allQualities,
         businessName: companyName,
-        businessDescription: businessDescription,
-      });
+        businessDescription: businessDescription || "",
+      };
+      console.log("=== PAYLOAD TO EDGE FUNCTION ===");
+      console.log("Payload object:", payloadToSend);
+      console.log("businessName type:", typeof payloadToSend.businessName);
+      console.log(
+        "businessName value:",
+        JSON.stringify(payloadToSend.businessName),
+      );
+      console.log("businessName length:", payloadToSend.businessName?.length);
+      console.log(
+        "businessDescription type:",
+        typeof payloadToSend.businessDescription,
+      );
+      console.log(
+        "businessDescription value:",
+        JSON.stringify(payloadToSend.businessDescription),
+      );
+      console.log(
+        "selectedQualities:",
+        JSON.stringify(payloadToSend.selectedQualities),
+      );
+      console.log("=== END PAYLOAD DEBUG ===");
+      console.log("=== END DEBUG ===");
+
+      // Validate that we have the required data
+      if (!allQualities.length) {
+        throw new Error("No qualities selected for review generation");
+      }
+
+      if (!companyName) {
+        throw new Error("Company name is missing");
+      }
 
       const { data, error } = await supabase.functions.invoke(
         "supabase-functions-generate-review",
         {
-          body: {
-            selectedQualities: allQualities,
-            businessName: companyName,
-            businessDescription: businessDescription,
-          },
+          body: payloadToSend,
         },
       );
 
+      // Log the response from edge function
+      console.log("=== EDGE FUNCTION RESPONSE ===");
+      console.log("Response data:", data);
+      console.log("Response error:", error);
+      console.log("=== END RESPONSE DEBUG ===");
+
+      console.log("Edge function response:", { data, error });
+
       if (error) {
-        throw new Error(error.message);
+        console.error("=== EDGE FUNCTION ERROR DETAILS ===");
+        console.error("Error object:", error);
+        console.error("Error message:", error.message);
+        console.error("Error details:", error.details);
+        console.error("Error hint:", error.hint);
+        console.error("Error code:", error.code);
+        console.error("=== END ERROR DETAILS ===");
+        throw new Error(error.message || "Unknown edge function error");
       }
 
       if (data?.review) {
+        console.log("Review generated successfully:", data.review);
         setGeneratedReview(data.review);
         setReviewText(data.review);
       } else {
-        throw new Error("No review generated");
+        console.error("No review in response data:", data);
+        throw new Error("No review generated - empty response");
       }
     } catch (error) {
       console.error("Error generating review:", error);
+
+      // More specific error handling
+      let errorMessage = "Failed to generate review. Please try again.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
       toast({
         title: "Error",
-        description: "Failed to generate review. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
+
       // Allow user to continue with manual review
       setReviewText("");
     } finally {

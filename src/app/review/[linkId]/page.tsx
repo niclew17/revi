@@ -10,42 +10,77 @@ interface ReviewPageProps {
 
 export default async function ReviewPage({ params }: ReviewPageProps) {
   const { linkId } = params;
-  const supabase = await createClient();
 
-  // Fetch employee data based on the unique link ID
-  const { data: employee, error } = await supabase
-    .from("employees")
-    .select("*")
-    .eq("unique_link_id", linkId)
-    .maybeSingle();
+  let supabase;
+  let employee = null;
+  let companyInfo = null;
+  let userInfo = null;
 
-  if (error) {
-    console.error("Employee fetch error:", error);
+  try {
+    supabase = await createClient();
+  } catch (error) {
     return notFound();
   }
 
-  if (!employee) {
-    console.error("Employee not found for linkId:", linkId);
+  // Fetch employee data based on the unique link ID with error handling
+  try {
+    const { data, error } = await supabase
+      .from("employees")
+      .select("*")
+      .eq("unique_link_id", linkId)
+      .maybeSingle();
+
+    if (error) {
+      return notFound();
+    }
+
+    if (!data) {
+      return notFound();
+    }
+
+    employee = data;
+  } catch (error) {
     return notFound();
   }
 
-  // Fetch company info separately
-  const { data: companyInfo, error: companyError } = await supabase
-    .from("company_info")
-    .select("company_name, website, business_description, google_review_link")
-    .eq("user_id", employee.user_id)
-    .maybeSingle();
+  // Fetch company info with comprehensive error handling
+  try {
+    const { data, error } = await supabase
+      .from("company_info")
+      .select("company_name, website, business_description, google_review_link")
+      .eq("user_id", employee.user_id)
+      .maybeSingle();
 
-  // Log company info for debugging
-  console.log("Company info fetched:", companyInfo);
-
-  if (companyError) {
-    console.error("Error fetching company info:", companyError);
+    if (error) {
+      // Continue without company info - use defaults
+    } else {
+      companyInfo = data;
+    }
+  } catch (error) {
+    // Continue without company info - use defaults
   }
 
-  // Generate dynamic attributes from company website
+  // Fetch user info with comprehensive error handling
+  try {
+    const { data, error } = await supabase
+      .from("users")
+      .select("name, email")
+      .eq("user_id", employee.user_id)
+      .maybeSingle();
+
+    if (error) {
+      // Continue without user info - use defaults
+    } else {
+      userInfo = data;
+    }
+  } catch (error) {
+    // Continue without user info - use defaults
+  }
+
+  // Generate dynamic attributes from company website with enhanced error handling
   let dynamicAttributes: string[] = [];
   let dynamicAdditionalAttributes: string[] = [];
+
   if (companyInfo?.website) {
     try {
       const { data: attributesData, error: attributesError } =
@@ -59,32 +94,24 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
         );
 
       if (attributesError) {
-        console.error("Error generating attributes:", attributesError);
+        // Continue with empty arrays - defaults will be used in the form
       } else if (
         attributesData?.attributeSet1 &&
         attributesData?.attributeSet2
       ) {
         dynamicAttributes = attributesData.attributeSet1;
         dynamicAdditionalAttributes = attributesData.attributeSet2;
-        console.log("Generated attributes:", {
-          attributeSet1: dynamicAttributes,
-          attributeSet2: dynamicAdditionalAttributes,
-        });
       }
     } catch (error) {
-      console.error("Failed to generate attributes:", error);
+      // Continue with empty arrays - defaults will be used in the form
     }
   }
 
-  // Fetch user info separately
-  const { data: userInfo } = await supabase
-    .from("users")
-    .select("name, email")
-    .eq("user_id", employee.user_id)
-    .single();
-
+  // Provide safe fallback values with proper null handling
   const companyName = companyInfo?.company_name || "Company";
   const employeeName = employee.name || userInfo?.name || "Technician";
+  const businessDescription = companyInfo?.business_description || "";
+  const googleReviewLink = companyInfo?.google_review_link || "";
 
   return (
     <main className="min-h-screen bg-background">
@@ -100,10 +127,10 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
           employeeId={employee.id}
           employeeName={employeeName}
           companyName={companyName}
-          businessDescription={companyInfo?.business_description || ""}
+          businessDescription={businessDescription}
           dynamicAttributes={dynamicAttributes}
           dynamicAdditionalAttributes={dynamicAdditionalAttributes}
-          googleReviewLink={companyInfo?.google_review_link || ""}
+          googleReviewLink={googleReviewLink}
         />
       </div>
     </main>

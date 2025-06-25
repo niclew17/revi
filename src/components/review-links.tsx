@@ -16,9 +16,11 @@ import {
   User,
   ExternalLink,
   QrCode,
+  Download,
 } from "lucide-react";
 import { useToast } from "./ui/use-toast";
 import { QRCodeSVG } from "qrcode.react";
+import jsPDF from "jspdf";
 
 export type Employee = {
   id: string;
@@ -39,26 +41,97 @@ export default function ReviewLinks({ employees }: ReviewLinksProps) {
   const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
   const [showQRCode, setShowQRCode] = useState<string | null>(null);
 
-  const copyToClipboard = (linkId: string) => {
-    const baseUrl = window.location.origin;
-    const fullLink = `${baseUrl}/review/${linkId}`;
-    navigator.clipboard.writeText(fullLink);
-    setCopiedLinkId(linkId);
-    setTimeout(() => setCopiedLinkId(null), 2000);
-    toast({
-      title: "Link copied",
-      description: "Review link copied to clipboard",
-    });
-  };
-
-  const openLink = (linkId: string) => {
-    const baseUrl = window.location.origin;
-    const fullLink = `${baseUrl}/review/${linkId}`;
-    window.open(fullLink, "_blank");
-  };
-
   const toggleQRCode = (linkId: string) => {
     setShowQRCode(showQRCode === linkId ? null : linkId);
+  };
+
+  const downloadQRCode = async (employee: Employee, reviewUrl: string) => {
+    // Create a canvas to generate QR code
+    const canvas = document.createElement("canvas");
+    const QRCode = await import("qrcode");
+
+    QRCode.default.toCanvas(
+      canvas,
+      reviewUrl,
+      {
+        width: 300,
+        margin: 2,
+        color: {
+          dark: "#000000",
+          light: "#FFFFFF",
+        },
+      },
+      (error: any) => {
+        if (error) {
+          console.error("Error generating QR code:", error);
+          return;
+        }
+
+        // Convert canvas to image data
+        const imgData = canvas.toDataURL("image/png");
+
+        // Create PDF
+        const pdf = new jsPDF({
+          orientation: "portrait",
+          unit: "mm",
+          format: "a4",
+        });
+
+        // Page dimensions
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+
+        // Title
+        pdf.setFontSize(24);
+        pdf.setFont("helvetica", "bold");
+        const title = "Review Link QR Code";
+        const titleWidth = pdf.getTextWidth(title);
+        pdf.text(title, (pageWidth - titleWidth) / 2, 40);
+
+        // Employee info
+        pdf.setFontSize(16);
+        pdf.setFont("helvetica", "bold");
+        const employeeName = employee.name;
+        const nameWidth = pdf.getTextWidth(employeeName);
+        pdf.text(employeeName, (pageWidth - nameWidth) / 2, 60);
+
+        if (employee.position) {
+          pdf.setFontSize(14);
+          pdf.setFont("helvetica", "normal");
+          const positionWidth = pdf.getTextWidth(employee.position);
+          pdf.text(employee.position, (pageWidth - positionWidth) / 2, 75);
+        }
+
+        // QR Code - centered on page
+        const qrSize = 80; // 80mm
+        const qrX = (pageWidth - qrSize) / 2;
+        const qrY = employee.position ? 90 : 80;
+        pdf.addImage(imgData, "PNG", qrX, qrY, qrSize, qrSize);
+
+        // Instructions
+        pdf.setFontSize(12);
+        pdf.setFont("helvetica", "normal");
+        const instructions = `Scan this QR code with your phone's camera to leave a review for ${employee.name}.`;
+        const maxWidth = 150;
+        const instructionsY = qrY + qrSize + 20;
+
+        // Split text to fit within page width
+        const splitInstructions = pdf.splitTextToSize(instructions, maxWidth);
+        const instructionsHeight = splitInstructions.length * 5;
+        const instructionsX = (pageWidth - maxWidth) / 2;
+
+        pdf.text(splitInstructions, instructionsX, instructionsY);
+
+        // Download the PDF
+        const fileName = `qr-code-${employee.name.replace(/\s+/g, "-").toLowerCase()}.pdf`;
+        pdf.save(fileName);
+
+        toast({
+          title: "QR Code Downloaded",
+          description: "QR code PDF has been downloaded successfully",
+        });
+      },
+    );
   };
 
   return (
@@ -113,7 +186,15 @@ export default function ReviewLinks({ employees }: ReviewLinksProps) {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => copyToClipboard(employee.unique_link_id)}
+                        onClick={() => {
+                          navigator.clipboard.writeText(reviewUrl);
+                          setCopiedLinkId(employee.unique_link_id);
+                          setTimeout(() => setCopiedLinkId(null), 2000);
+                          toast({
+                            title: "Link copied",
+                            description: "Review link copied to clipboard",
+                          });
+                        }}
                         className="flex items-center gap-1"
                       >
                         {copiedLinkId === employee.unique_link_id ? (
@@ -140,7 +221,7 @@ export default function ReviewLinks({ employees }: ReviewLinksProps) {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => openLink(employee.unique_link_id)}
+                        onClick={() => window.open(reviewUrl, "_blank")}
                         className="flex items-center gap-1"
                       >
                         <ExternalLink className="h-4 w-4" />
@@ -158,9 +239,20 @@ export default function ReviewLinks({ employees }: ReviewLinksProps) {
                           includeMargin={true}
                         />
                       </div>
-                      <p className="text-sm text-muted-foreground text-center">
-                        Scan this QR code to access the review link
-                      </p>
+                      <div className="flex flex-col items-center gap-2">
+                        <p className="text-sm text-muted-foreground text-center">
+                          Scan this QR code to access the review link
+                        </p>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => downloadQRCode(employee, reviewUrl)}
+                          className="flex items-center gap-1 bg-custom-blue hover:bg-custom-blue/90"
+                        >
+                          <Download className="h-4 w-4" />
+                          Download QR Code
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </div>
