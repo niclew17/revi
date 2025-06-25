@@ -280,7 +280,7 @@ export const updateCompanyInfo = async (input: CompanyInfoInput) => {
           website,
           email,
           business_description: businessDescription,
-          google_review_link: googleReviewsUrl,
+          google_reviews_url: googleReviewsUrl,
           facebook_url: facebookUrl,
           instagram_url: instagramUrl,
         })

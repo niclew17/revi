@@ -34,9 +34,13 @@ export type Employee = {
 
 interface ReviewLinksProps {
   employees: Employee[];
+  companyName?: string;
 }
 
-export default function ReviewLinks({ employees }: ReviewLinksProps) {
+export default function ReviewLinks({
+  employees,
+  companyName = "Your Business",
+}: ReviewLinksProps) {
   const { toast } = useToast();
   const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
   const [showQRCode, setShowQRCode] = useState<string | null>(null);
@@ -48,9 +52,9 @@ export default function ReviewLinks({ employees }: ReviewLinksProps) {
   const downloadQRCode = async (employee: Employee, reviewUrl: string) => {
     // Create a canvas to generate QR code
     const canvas = document.createElement("canvas");
-    const QRCode = await import("qrcode");
+    const QRCode = (await import("qrcode")).default;
 
-    QRCode.default.toCanvas(
+    QRCode.toCanvas(
       canvas,
       reviewUrl,
       {
@@ -81,49 +85,21 @@ export default function ReviewLinks({ employees }: ReviewLinksProps) {
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
 
-        // Title
+        // Main Title
         pdf.setFontSize(24);
         pdf.setFont("helvetica", "bold");
-        const title = "Review Link QR Code";
+        const title = "Leave us a review";
         const titleWidth = pdf.getTextWidth(title);
-        pdf.text(title, (pageWidth - titleWidth) / 2, 40);
-
-        // Employee info
-        pdf.setFontSize(16);
-        pdf.setFont("helvetica", "bold");
-        const employeeName = employee.name;
-        const nameWidth = pdf.getTextWidth(employeeName);
-        pdf.text(employeeName, (pageWidth - nameWidth) / 2, 60);
-
-        if (employee.position) {
-          pdf.setFontSize(14);
-          pdf.setFont("helvetica", "normal");
-          const positionWidth = pdf.getTextWidth(employee.position);
-          pdf.text(employee.position, (pageWidth - positionWidth) / 2, 75);
-        }
+        pdf.text(title, (pageWidth - titleWidth) / 2, 50);
 
         // QR Code - centered on page
         const qrSize = 80; // 80mm
         const qrX = (pageWidth - qrSize) / 2;
-        const qrY = employee.position ? 90 : 80;
+        const qrY = 80;
         pdf.addImage(imgData, "PNG", qrX, qrY, qrSize, qrSize);
 
-        // Instructions
-        pdf.setFontSize(12);
-        pdf.setFont("helvetica", "normal");
-        const instructions = `Scan this QR code with your phone's camera to leave a review for ${employee.name}.`;
-        const maxWidth = 150;
-        const instructionsY = qrY + qrSize + 20;
-
-        // Split text to fit within page width
-        const splitInstructions = pdf.splitTextToSize(instructions, maxWidth);
-        const instructionsHeight = splitInstructions.length * 5;
-        const instructionsX = (pageWidth - maxWidth) / 2;
-
-        pdf.text(splitInstructions, instructionsX, instructionsY);
-
         // Download the PDF
-        const fileName = `qr-code-${employee.name.replace(/\s+/g, "-").toLowerCase()}.pdf`;
+        const fileName = `review-qr-code.pdf`;
         pdf.save(fileName);
 
         toast({

@@ -119,7 +119,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">{companyName}</h1>
           <p className="text-xl text-muted-foreground">
-            Share your experience with {employeeName}
+            Share your experience with {companyName}
           </p>
         </div>
 

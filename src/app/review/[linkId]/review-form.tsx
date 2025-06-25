@@ -385,7 +385,7 @@ export default function ReviewForm({
                 Loading Review Form
               </h2>
               <p className="text-muted-foreground">
-                Preparing your review experience for {employeeName}...
+                Preparing your review experience for {companyName}...
               </p>
             </div>
           </div>
@@ -404,8 +404,7 @@ export default function ReviewForm({
             </div>
             <h2 className="text-2xl font-semibold mb-2">Thank You!</h2>
             <p className="text-muted-foreground mb-4">
-              Your review for {employeeName} at {companyName} has been copied to
-              your clipboard.
+              Your review for {companyName} has been copied to your clipboard.
             </p>
             <p className="text-sm text-muted-foreground mb-4">
               Click the button below to open Google Reviews and paste your
@@ -436,7 +435,7 @@ export default function ReviewForm({
         <CardHeader className="text-center">
           <CardTitle>Rate Your Experience</CardTitle>
           <CardDescription>
-            How would you rate your experience with {employeeName}?
+            How would you rate your experience with {companyName}?
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -512,7 +511,8 @@ export default function ReviewForm({
           </div>
           <CardTitle>What made your experience great?</CardTitle>
           <CardDescription>
-            Select the attributes that best describe {employeeName}
+            Select the attributes that best describe your experience with{" "}
+            {companyName}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -585,7 +585,8 @@ export default function ReviewForm({
           </div>
           <CardTitle>Additional qualities</CardTitle>
           <CardDescription>
-            Select additional attributes that describe {employeeName}
+            Select additional attributes that describe your experience with{" "}
+            {companyName}
           </CardDescription>
         </CardHeader>
         <CardContent>
