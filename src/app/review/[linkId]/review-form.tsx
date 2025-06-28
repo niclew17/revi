@@ -79,22 +79,6 @@ export default function ReviewForm({
 
   // Simulate initial loading to show loading indicator
   useEffect(() => {
-    // Log initial component mount for debugging
-    console.log("=== REVIEW FORM MOUNT DEBUG ===");
-    console.log("Props received:", {
-      employeeId,
-      employeeName,
-      companyName,
-      businessDescription,
-      dynamicAttributes,
-      dynamicAdditionalAttributes,
-      googleReviewLink,
-    });
-    console.log("User Agent:", navigator.userAgent);
-    console.log("Current URL:", window.location.href);
-    console.log("Referrer:", document.referrer);
-    console.log("=== END MOUNT DEBUG ===");
-
     const timer = setTimeout(() => {
       setIsInitialLoading(false);
     }, 1500); // Show loading for 1.5 seconds
@@ -181,49 +165,11 @@ export default function ReviewForm({
         ...selectedAdditionalAttributes,
       ];
 
-      // Enhanced logging to debug QR code vs direct access
-      console.log("=== REVIEW GENERATION DEBUG ===");
-      console.log("User Agent:", navigator.userAgent);
-      console.log("Referrer:", document.referrer);
-      console.log("Current URL:", window.location.href);
-      console.log("Selected Attributes:", selectedAttributes);
-      console.log(
-        "Selected Additional Attributes:",
-        selectedAdditionalAttributes,
-      );
-      console.log("All Qualities:", allQualities);
-      console.log("Company Name:", companyName);
-      console.log("Business Description:", businessDescription);
-      console.log("Employee ID:", employeeId);
-
-      // CRITICAL: Log the exact payload being sent to edge function
       const payloadToSend = {
         selectedQualities: allQualities,
         businessName: companyName,
         businessDescription: businessDescription || "",
       };
-      console.log("=== PAYLOAD TO EDGE FUNCTION ===");
-      console.log("Payload object:", payloadToSend);
-      console.log("businessName type:", typeof payloadToSend.businessName);
-      console.log(
-        "businessName value:",
-        JSON.stringify(payloadToSend.businessName),
-      );
-      console.log("businessName length:", payloadToSend.businessName?.length);
-      console.log(
-        "businessDescription type:",
-        typeof payloadToSend.businessDescription,
-      );
-      console.log(
-        "businessDescription value:",
-        JSON.stringify(payloadToSend.businessDescription),
-      );
-      console.log(
-        "selectedQualities:",
-        JSON.stringify(payloadToSend.selectedQualities),
-      );
-      console.log("=== END PAYLOAD DEBUG ===");
-      console.log("=== END DEBUG ===");
 
       // Validate that we have the required data
       if (!allQualities.length) {
@@ -241,27 +187,12 @@ export default function ReviewForm({
         },
       );
 
-      // Log the response from edge function
-      console.log("=== EDGE FUNCTION RESPONSE ===");
-      console.log("Response data:", data);
-      console.log("Response error:", error);
-      console.log("=== END RESPONSE DEBUG ===");
-
-      console.log("Edge function response:", { data, error });
-
       if (error) {
-        console.error("=== EDGE FUNCTION ERROR DETAILS ===");
-        console.error("Error object:", error);
-        console.error("Error message:", error.message);
-        console.error("Error details:", error.details);
-        console.error("Error hint:", error.hint);
-        console.error("Error code:", error.code);
-        console.error("=== END ERROR DETAILS ===");
+        console.error("Edge function error:", error);
         throw new Error(error.message || "Unknown edge function error");
       }
 
       if (data?.review) {
-        console.log("Review generated successfully:", data.review);
         setGeneratedReview(data.review);
         setReviewText(data.review);
       } else {
@@ -314,19 +245,16 @@ export default function ReviewForm({
 
     setIsSubmitting(true);
 
+    // Save the review to database for tracking first
+    const allAttributes = [
+      ...selectedAttributes,
+      ...selectedAdditionalAttributes,
+    ];
+    const reviewTextToSave = isLowRating
+      ? reviewText.trim()
+      : `${reviewText.trim()}\n\nAttributes: ${allAttributes.join(", ")}`;
+
     try {
-      // Copy the review text to clipboard
-      await navigator.clipboard.writeText(reviewText.trim());
-
-      // Save the review to database for tracking
-      const allAttributes = [
-        ...selectedAttributes,
-        ...selectedAdditionalAttributes,
-      ];
-      const reviewTextToSave = isLowRating
-        ? reviewText.trim()
-        : `${reviewText.trim()}\n\nAttributes: ${allAttributes.join(", ")}`;
-
       const result = await submitReview({
         employeeId,
         reviewText: reviewTextToSave,
@@ -334,43 +262,95 @@ export default function ReviewForm({
         platforms: ["google"], // Always Google since we're redirecting there
       });
 
-      if (result.success) {
-        toast({
-          title: "Review copied!",
-          description:
-            "Your review has been copied to clipboard. Redirecting to Google Reviews...",
-        });
-
-        // Redirect directly to Google Reviews after a short delay
-        setTimeout(() => {
-          if (googleReviewLink) {
-            window.open(googleReviewLink, "_blank");
-          }
-        }, 1000);
-      } else {
+      if (!result.success) {
         toast({
           title: "Error",
           description:
             result.error || "Failed to submit review. Please try again.",
           variant: "destructive",
         });
+        setIsSubmitting(false);
+        return;
       }
     } catch (error) {
-      console.error("Error copying to clipboard:", error);
+      console.error("Error submitting review:", error);
       toast({
-        title: "Review ready!",
-        description: "Your review is ready. Redirecting to Google Reviews...",
+        title: "Error",
+        description: "Failed to submit review. Please try again.",
+        variant: "destructive",
       });
-
-      // Redirect to Google Reviews even if clipboard fails
-      setTimeout(() => {
-        if (googleReviewLink) {
-          window.open(googleReviewLink, "_blank");
-        }
-      }, 1000);
-    } finally {
       setIsSubmitting(false);
+      return;
     }
+
+    // Simple clipboard copy functionality
+    let clipboardSuccess = false;
+    const textToCopy = reviewText.trim();
+
+    try {
+      // Try modern clipboard API first
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(textToCopy);
+        clipboardSuccess = true;
+      } else {
+        // Fallback to execCommand for older browsers
+        const textArea = document.createElement("textarea");
+        textArea.value = textToCopy;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        clipboardSuccess = document.execCommand("copy");
+        document.body.removeChild(textArea);
+      }
+    } catch (error) {
+      console.error("Failed to copy to clipboard:", error);
+      clipboardSuccess = false;
+    }
+
+    const successMessage = clipboardSuccess
+      ? "Review copied! Opening Google Reviews..."
+      : "Review ready! Please copy the text manually when Google Reviews opens.";
+
+    toast({
+      title: "Review submitted!",
+      description: successMessage,
+      duration: 3000,
+    });
+
+    // Redirect to Google Reviews
+    if (googleReviewLink && googleReviewLink.trim()) {
+      setTimeout(() => {
+        try {
+          // For mobile devices, use location.href for better compatibility
+          if (/Mobi|Android/i.test(navigator.userAgent)) {
+            window.location.href = googleReviewLink;
+          } else {
+            window.open(googleReviewLink, "_blank");
+          }
+        } catch (error) {
+          console.error("Redirect failed:", error);
+          toast({
+            title: "Redirect failed",
+            description:
+              "Please manually visit Google Reviews to post your review.",
+            variant: "destructive",
+            duration: 5000,
+          });
+        }
+      }, 1500);
+    } else {
+      toast({
+        title: "No Google Review link",
+        description: "Please contact the business for the Google Review link.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    }
+
+    setIsSubmitting(false);
   };
 
   // Show loading indicator when form is initially loading
@@ -718,12 +698,11 @@ export default function ReviewForm({
                 )}
               </Button>
 
-              {/* Info about what happens next */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-800">
                   <strong>What happens next:</strong> Your review will be copied
-                  to your clipboard and Google Reviews will open in a new tab
-                  where you can paste and post it.
+                  and Google Reviews will open automatically. Paste your review
+                  there and submit it.
                 </p>
               </div>
             </div>

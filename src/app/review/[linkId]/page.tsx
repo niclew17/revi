@@ -47,7 +47,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
   try {
     const { data, error } = await supabase
       .from("company_info")
-      .select("company_name, website, business_description, google_review_link")
+      .select("company_name, website, business_description, google_reviews_url")
       .eq("user_id", employee.user_id)
       .maybeSingle();
 
@@ -111,7 +111,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
   const companyName = companyInfo?.company_name || "Company";
   const employeeName = employee.name || userInfo?.name || "Technician";
   const businessDescription = companyInfo?.business_description || "";
-  const googleReviewLink = companyInfo?.google_review_link || "";
+  const googleReviewLink = companyInfo?.google_reviews_url || "";
 
   return (
     <main className="min-h-screen bg-background">
