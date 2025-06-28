@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import {
   Card,
@@ -44,12 +44,19 @@ export default function ReviewLinks({
   const { toast } = useToast();
   const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
   const [showQRCode, setShowQRCode] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  // Set isClient to true only on the client side
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const toggleQRCode = (linkId: string) => {
     setShowQRCode(showQRCode === linkId ? null : linkId);
   };
 
   const downloadQRCode = async (employee: Employee, reviewUrl: string) => {
+    if (!isClient) return;
     // Create a canvas to generate QR code
     const canvas = document.createElement("canvas");
     const QRCode = (await import("qrcode")).default;
@@ -131,7 +138,11 @@ export default function ReviewLinks({
         ) : (
           <div className="grid gap-4">
             {employees.map((employee) => {
-              const reviewUrl = `${window.location.origin}/review/${employee.unique_link_id}`;
+              // Use a placeholder URL during server-side rendering
+              // and update it on the client side
+              const reviewUrl = isClient
+                ? `${window.location.origin}/review/${employee.unique_link_id}`
+                : `#/review/${employee.unique_link_id}`;
 
               return (
                 <div
@@ -163,13 +174,15 @@ export default function ReviewLinks({
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          navigator.clipboard.writeText(reviewUrl);
-                          setCopiedLinkId(employee.unique_link_id);
-                          setTimeout(() => setCopiedLinkId(null), 2000);
-                          toast({
-                            title: "Link copied",
-                            description: "Review link copied to clipboard",
-                          });
+                          if (isClient) {
+                            navigator.clipboard.writeText(reviewUrl);
+                            setCopiedLinkId(employee.unique_link_id);
+                            setTimeout(() => setCopiedLinkId(null), 2000);
+                            toast({
+                              title: "Link copied",
+                              description: "Review link copied to clipboard",
+                            });
+                          }
                         }}
                         className="flex items-center gap-1"
                       >
@@ -197,7 +210,9 @@ export default function ReviewLinks({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => window.open(reviewUrl, "_blank")}
+                        onClick={() =>
+                          isClient && window.open(reviewUrl, "_blank")
+                        }
                         className="flex items-center gap-1"
                       >
                         <ExternalLink className="h-4 w-4" />

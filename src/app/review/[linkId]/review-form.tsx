@@ -233,6 +233,135 @@ export default function ReviewForm({
     }
   };
 
+  const handleCopyToClipboard = async (silent = false) => {
+    if (!reviewText.trim()) {
+      if (!silent) {
+        toast({
+          title: "Error",
+          description: "No review text to copy.",
+          variant: "destructive",
+        });
+      }
+      return false;
+    }
+
+    // ROBUST CLIPBOARD COPY - Multiple fallback methods with iOS Safari optimization
+    const textToCopy = reviewText.trim();
+    let clipboardSuccess = false;
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+
+    // Method 1: Modern Clipboard API (most reliable when available)
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(textToCopy);
+        clipboardSuccess = true;
+        console.log("✅ Clipboard API successful");
+      } catch (error) {
+        console.warn("❌ Clipboard API failed:", error);
+      }
+    }
+
+    // Method 2: execCommand fallback (if Method 1 failed)
+    if (!clipboardSuccess) {
+      try {
+        const textArea = document.createElement("textarea");
+        textArea.value = textToCopy;
+
+        // Critical: Make it invisible but focusable
+        textArea.style.position = "fixed";
+        textArea.style.top = "0";
+        textArea.style.left = "0";
+        textArea.style.width = "2em";
+        textArea.style.height = "2em";
+        textArea.style.padding = "0";
+        textArea.style.border = "none";
+        textArea.style.outline = "none";
+        textArea.style.boxShadow = "none";
+        textArea.style.background = "transparent";
+        textArea.style.opacity = "0";
+        textArea.style.zIndex = "-1";
+
+        // Add to DOM
+        document.body.appendChild(textArea);
+
+        // Focus and select - works on both mobile and desktop
+        textArea.focus();
+        textArea.select();
+
+        // For mobile devices, ensure full selection
+        if (isMobile) {
+          textArea.setSelectionRange(0, textArea.value.length);
+          // Add a small delay for mobile devices
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+
+        // Attempt copy
+        clipboardSuccess = document.execCommand("copy");
+
+        // Clean up
+        document.body.removeChild(textArea);
+
+        if (clipboardSuccess) {
+          console.log("✅ execCommand successful");
+        } else {
+          console.warn("❌ execCommand failed");
+        }
+      } catch (error) {
+        console.warn("❌ execCommand method failed:", error);
+      }
+    }
+
+    // Method 3: iOS Safari specific fix (if still failed)
+    if (!clipboardSuccess && isIOS) {
+      try {
+        const range = document.createRange();
+        const selection = window.getSelection();
+        const mark = document.createElement("span");
+
+        mark.textContent = textToCopy;
+        // Make it visible for iOS Safari but positioned offscreen
+        mark.style.position = "absolute";
+        mark.style.left = "-9999px";
+        mark.style.top = "0px";
+        mark.style.whiteSpace = "pre";
+
+        document.body.appendChild(mark);
+        range.selectNodeContents(mark);
+        selection.removeAllRanges();
+        selection.addRange(range);
+
+        // Add a small delay for iOS
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        clipboardSuccess = document.execCommand("copy");
+        document.body.removeChild(mark);
+
+        if (clipboardSuccess) {
+          console.log("✅ iOS Safari method successful");
+        }
+      } catch (error) {
+        console.warn("❌ iOS Safari method failed:", error);
+      }
+    }
+
+    // Show appropriate message if not in silent mode
+    if (!silent) {
+      const successMessage = clipboardSuccess
+        ? "Review copied to clipboard!"
+        : "Failed to copy automatically. Please copy the text manually.";
+
+      toast({
+        title: clipboardSuccess ? "Success!" : "Copy Failed",
+        description: successMessage,
+        variant: clipboardSuccess ? "default" : "destructive",
+        duration: 3000,
+      });
+    }
+
+    return clipboardSuccess;
+  };
+
   const handleSubmit = async () => {
     if (!reviewText.trim()) {
       toast({
@@ -272,6 +401,19 @@ export default function ReviewForm({
         setIsSubmitting(false);
         return;
       }
+
+      // After successful submission, copy to clipboard
+      await handleCopyToClipboard(true); // Pass true to indicate silent mode (no toast)
+
+      toast({
+        title: "Review submitted!",
+        description:
+          "Your review has been copied to clipboard and saved successfully.",
+        duration: 3000,
+      });
+
+      // Set submitted state to true to show the success screen
+      setIsSubmitted(true);
     } catch (error) {
       console.error("Error submitting review:", error);
       toast({
@@ -279,68 +421,54 @@ export default function ReviewForm({
         description: "Failed to submit review. Please try again.",
         variant: "destructive",
       });
-      setIsSubmitting(false);
-      return;
     }
 
-    // Simple clipboard copy functionality
-    let clipboardSuccess = false;
-    const textToCopy = reviewText.trim();
+    setIsSubmitting(false);
+  };
 
-    try {
-      // Try modern clipboard API first
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(textToCopy);
-        clipboardSuccess = true;
-      } else {
-        // Fallback to execCommand for older browsers
-        const textArea = document.createElement("textarea");
-        textArea.value = textToCopy;
-        textArea.style.position = "fixed";
-        textArea.style.left = "-999999px";
-        textArea.style.top = "-999999px";
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        clipboardSuccess = document.execCommand("copy");
-        document.body.removeChild(textArea);
-      }
-    } catch (error) {
-      console.error("Failed to copy to clipboard:", error);
-      clipboardSuccess = false;
-    }
-
-    const successMessage = clipboardSuccess
-      ? "Review copied! Opening Google Reviews..."
-      : "Review ready! Please copy the text manually when Google Reviews opens.";
-
-    toast({
-      title: "Review submitted!",
-      description: successMessage,
-      duration: 3000,
-    });
-
-    // Redirect to Google Reviews
+  const handleGoToGoogleReviews = async () => {
     if (googleReviewLink && googleReviewLink.trim()) {
-      setTimeout(() => {
-        try {
-          // For mobile devices, use location.href for better compatibility
-          if (/Mobi|Android/i.test(navigator.userAgent)) {
-            window.location.href = googleReviewLink;
-          } else {
-            window.open(googleReviewLink, "_blank");
-          }
-        } catch (error) {
-          console.error("Redirect failed:", error);
+      try {
+        // First try to copy the review to clipboard
+        const copySuccess = await handleCopyToClipboard(true); // Silent mode
+
+        if (copySuccess) {
           toast({
-            title: "Redirect failed",
+            title: "Review copied!",
             description:
-              "Please manually visit Google Reviews to post your review.",
-            variant: "destructive",
-            duration: 5000,
+              "Your review has been copied to clipboard. Redirecting to Google Reviews...",
+            duration: 2000,
           });
+
+          // Add a small delay to ensure the toast is shown before redirect
+          await new Promise((resolve) => setTimeout(resolve, 500));
         }
-      }, 1500);
+
+        // Use different methods based on device type for better compatibility
+        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+        if (isMobile) {
+          // Mobile: Use location.href for better app integration
+          window.location.href = googleReviewLink;
+        } else {
+          // Desktop: Use window.open for new tab
+          const newWindow = window.open(googleReviewLink, "_blank");
+          if (!newWindow) {
+            // Popup blocked, fallback to location
+            window.location.href = googleReviewLink;
+          }
+        }
+      } catch (error) {
+        console.error("Redirect failed:", error);
+        toast({
+          title: "Redirect failed",
+          description:
+            "Please manually visit Google Reviews to post your review.",
+          variant: "destructive",
+          duration: 5000,
+        });
+      }
     } else {
       toast({
         title: "No Google Review link",
@@ -349,8 +477,6 @@ export default function ReviewForm({
         duration: 5000,
       });
     }
-
-    setIsSubmitting(false);
   };
 
   // Show loading indicator when form is initially loading
@@ -391,10 +517,7 @@ export default function ReviewForm({
               review.
             </p>
             {googleReviewLink ? (
-              <Button
-                onClick={() => window.open(googleReviewLink, "_blank")}
-                className="mt-4"
-              >
+              <Button onClick={handleGoToGoogleReviews} className="mt-4">
                 Open Google Reviews
               </Button>
             ) : (
@@ -681,28 +804,34 @@ export default function ReviewForm({
               )}
             </div>
 
-            {/* Submit Button */}
+            {/* Action Buttons */}
             <div className="space-y-4">
-              <Button
-                onClick={handleSubmit}
-                className="w-full"
-                disabled={!reviewText.trim() || isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    Copying Review...
-                  </>
-                ) : (
-                  "Copy Review & Go to Google Reviews"
-                )}
-              </Button>
+              <div className="grid grid-cols-1 gap-3">
+                <Button
+                  onClick={() => handleCopyToClipboard(false)}
+                  className="w-full"
+                  disabled={!reviewText.trim()}
+                >
+                  Copy Review to Clipboard
+                </Button>
+
+                <Button
+                  onClick={handleGoToGoogleReviews}
+                  variant="secondary"
+                  className="w-full"
+                  disabled={!googleReviewLink}
+                >
+                  Go to Google Reviews
+                </Button>
+              </div>
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-800">
-                  <strong>What happens next:</strong> Your review will be copied
-                  and Google Reviews will open automatically. Paste your review
-                  there and submit it.
+                  <strong>How to post your review:</strong>
+                  <br />
+                  1. Copy the review text to your clipboard
+                  <br />
+                  2. Go to Google Reviews and paste your review there
                 </p>
               </div>
             </div>
