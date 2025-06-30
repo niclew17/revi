@@ -1,6 +1,8 @@
 import { createClient } from "../../../../supabase/server";
 import { notFound } from "next/navigation";
 import ReviewForm from "./review-form";
+import { Suspense } from "react";
+import { Loader2 } from "lucide-react";
 
 interface ReviewPageProps {
   params: {
@@ -8,9 +10,40 @@ interface ReviewPageProps {
   };
 }
 
-export default async function ReviewPage({ params }: ReviewPageProps) {
-  const { linkId } = params;
+// Loading component with logo
+function ReviewPageLoading() {
+  return (
+    <main className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-12 max-w-2xl">
+        <div className="bg-white rounded-lg shadow-sm border p-8">
+          <div className="flex items-center justify-center py-16">
+            <div className="text-center">
+              {/* Company Logo */}
+              <div className="mb-6">
+                <img
+                  src="/images/logo.svg"
+                  alt="Company Logo"
+                  className="w-16 h-16 mx-auto"
+                  style={{ display: "block" }}
+                />
+              </div>
+              <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-primary" />
+              <h2 className="text-xl font-semibold mb-2">
+                Loading Review Form
+              </h2>
+              <p className="text-muted-foreground">
+                Preparing your review experience...
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
 
+// Async component that handles data fetching
+async function ReviewPageContent({ linkId }: { linkId: string }) {
   let supabase;
   let employee = null;
   let companyInfo = null;
@@ -134,5 +167,13 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
         />
       </div>
     </main>
+  );
+}
+
+export default function ReviewPage({ params }: ReviewPageProps) {
+  return (
+    <Suspense fallback={<ReviewPageLoading />}>
+      <ReviewPageContent linkId={params.linkId} />
+    </Suspense>
   );
 }
