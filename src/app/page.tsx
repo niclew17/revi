@@ -24,6 +24,46 @@ export default async function Home() {
     "supabase-functions-get-plans",
   );
 
+  // Fallback plans if the function fails
+  const fallbackPlans = [
+    {
+      id: "free-tier",
+      name: "Free",
+      amount: 0,
+      interval: "month",
+      currency: "usd",
+      features: ["1 employee", "10 free reviews"],
+      popular: false,
+    },
+    {
+      id: "business-tier",
+      name: "Business",
+      amount: 3000,
+      interval: "month",
+      currency: "usd",
+      features: ["Up to 10 employees", "100 reviews per month"],
+      popular: true,
+      price: "price_business",
+    },
+    {
+      id: "enterprise-tier",
+      name: "Enterprise",
+      amount: 10000,
+      interval: "month",
+      currency: "usd",
+      features: [
+        "Up to 50 employees",
+        "Unlimited reviews",
+        "Priority support",
+        "Custom integrations",
+      ],
+      popular: false,
+      price: "price_enterprise",
+    },
+  ];
+
+  const displayPlans = plans && !error ? plans : fallbackPlans;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       <Navbar />
@@ -222,7 +262,7 @@ export default async function Home() {
             </p>
           </div>
           <div className="flex flex-col md:flex-row justify-center items-center gap-16 max-w-5xl mx-auto">
-            {plans?.map((item: any) => (
+            {displayPlans?.map((item: any) => (
               <PricingCard key={item.id} item={item} user={user} />
             ))}
           </div>

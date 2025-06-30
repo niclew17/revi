@@ -78,6 +78,54 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error("Error getting products:", error);
+
+    // If Stripe API fails (e.g., expired key), return fallback plans
+    if (error.code === "api_key_expired" || error.statusCode === 401) {
+      console.log("Stripe API key expired, returning fallback plans");
+
+      const fallbackPlans = [
+        {
+          id: "free-tier",
+          name: "Free",
+          amount: 0,
+          interval: "month",
+          currency: "usd",
+          features: ["1 employee", "10 free reviews"],
+          popular: false,
+        },
+        {
+          id: "business-tier",
+          name: "Business",
+          amount: 3000,
+          interval: "month",
+          currency: "usd",
+          features: ["Up to 10 employees", "100 reviews per month"],
+          popular: true,
+          price: "price_business", // Fallback price ID
+        },
+        {
+          id: "enterprise-tier",
+          name: "Enterprise",
+          amount: 10000,
+          interval: "month",
+          currency: "usd",
+          features: [
+            "Up to 50 employees",
+            "Unlimited reviews",
+            "Priority support",
+            "Custom integrations",
+          ],
+          popular: false,
+          price: "price_enterprise", // Fallback price ID
+        },
+      ];
+
+      return new Response(JSON.stringify(fallbackPlans), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 400,
