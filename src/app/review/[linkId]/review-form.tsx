@@ -48,8 +48,7 @@ export default function ReviewForm({
     useState<string[]>([]);
   const [generatedReview, setGeneratedReview] = useState("");
   const [isGeneratingReview, setIsGeneratingReview] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+
   const [isLowRating, setIsLowRating] = useState(false);
 
   // Use dynamic attributes if available, otherwise fall back to default ones
@@ -362,70 +361,6 @@ export default function ReviewForm({
     return clipboardSuccess;
   };
 
-  const handleSubmit = async () => {
-    if (!reviewText.trim()) {
-      toast({
-        title: "Error",
-        description: "No review was generated. Please try again.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    // Save the review to database for tracking first
-    const allAttributes = [
-      ...selectedAttributes,
-      ...selectedAdditionalAttributes,
-    ];
-    const reviewTextToSave = isLowRating
-      ? reviewText.trim()
-      : `${reviewText.trim()}\n\nAttributes: ${allAttributes.join(", ")}`;
-
-    try {
-      const result = await submitReview({
-        employeeId,
-        reviewText: reviewTextToSave,
-        rating,
-        platforms: ["google"], // Always Google since we're redirecting there
-      });
-
-      if (!result.success) {
-        toast({
-          title: "Error",
-          description:
-            result.error || "Failed to submit review. Please try again.",
-          variant: "destructive",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
-      // After successful submission, copy to clipboard
-      await handleCopyToClipboard(true); // Pass true to indicate silent mode (no toast)
-
-      toast({
-        title: "Review submitted!",
-        description:
-          "Your review has been copied to clipboard and saved successfully.",
-        duration: 3000,
-      });
-
-      // Set submitted state to true to show the success screen
-      setIsSubmitted(true);
-    } catch (error) {
-      console.error("Error submitting review:", error);
-      toast({
-        title: "Error",
-        description: "Failed to submit review. Please try again.",
-        variant: "destructive",
-      });
-    }
-
-    setIsSubmitting(false);
-  };
-
   const handleGoToGoogleReviews = async () => {
     if (googleReviewLink && googleReviewLink.trim()) {
       try {
@@ -494,37 +429,6 @@ export default function ReviewForm({
                 Preparing your review experience for {companyName}...
               </p>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (isSubmitted) {
-    return (
-      <Card className="bg-white">
-        <CardContent className="pt-6">
-          <div className="text-center py-8">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-8 h-8 text-green-600" />
-            </div>
-            <h2 className="text-2xl font-semibold mb-2">Thank You!</h2>
-            <p className="text-muted-foreground mb-4">
-              Your review for {companyName} has been copied to your clipboard.
-            </p>
-            <p className="text-sm text-muted-foreground mb-4">
-              Click the button below to open Google Reviews and paste your
-              review.
-            </p>
-            {googleReviewLink ? (
-              <Button onClick={handleGoToGoogleReviews} className="mt-4">
-                Open Google Reviews
-              </Button>
-            ) : (
-              <p className="text-sm text-red-600">
-                No Google Review link available. Please contact the business.
-              </p>
-            )}
           </div>
         </CardContent>
       </Card>
@@ -829,9 +733,12 @@ export default function ReviewForm({
                 <p className="text-sm text-blue-800">
                   <strong>How to post your review:</strong>
                   <br />
-                  1. Copy the review text to your clipboard
+                  1. Copy the review text to your clipboard using the button
+                  above
                   <br />
-                  2. Go to Google Reviews and paste your review there
+                  2. Click "Go to Google Reviews" to open Google Reviews
+                  <br />
+                  3. Paste your review on the Google Reviews page
                 </p>
               </div>
             </div>
