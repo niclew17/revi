@@ -13,8 +13,8 @@ import {
   CardTitle,
 } from "../../../components/ui/card";
 import { Checkbox } from "../../../components/ui/checkbox";
-import { Star, CheckCircle, ArrowLeft, Loader2 } from "lucide-react";
-import { submitReview } from "../../actions";
+import { Star, ArrowLeft, Loader2 } from "lucide-react";
+
 import { useToast } from "../../../components/ui/use-toast";
 import { createClient } from "../../../../supabase/client";
 
@@ -327,8 +327,10 @@ export default function ReviewForm({
 
         document.body.appendChild(mark);
         range.selectNodeContents(mark);
-        selection.removeAllRanges();
-        selection.addRange(range);
+        if (selection) {
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
 
         // Add a small delay for iOS
         await new Promise((resolve) => setTimeout(resolve, 100));
