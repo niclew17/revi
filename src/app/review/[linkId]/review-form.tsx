@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from "../../../components/ui/card";
 import { Checkbox } from "../../../components/ui/checkbox";
-import { Star, ArrowLeft, Loader2 } from "lucide-react";
+import { Star, ArrowLeft, Loader2, Check, Copy } from "lucide-react";
 
 import { useToast } from "../../../components/ui/use-toast";
 import { createClient } from "../../../../supabase/client";
@@ -232,6 +232,9 @@ export default function ReviewForm({
     }
   };
 
+  const [isCopying, setIsCopying] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
+
   const handleCopyToClipboard = async (silent = false) => {
     if (!reviewText.trim()) {
       if (!silent) {
@@ -243,6 +246,9 @@ export default function ReviewForm({
       }
       return false;
     }
+
+    setIsCopying(true);
+    setCopySuccess(false);
 
     // ROBUST CLIPBOARD COPY - Multiple fallback methods with iOS Safari optimization
     const textToCopy = reviewText.trim();
@@ -346,6 +352,9 @@ export default function ReviewForm({
       }
     }
 
+    setIsCopying(false);
+    setCopySuccess(clipboardSuccess);
+
     // Show appropriate message if not in silent mode
     if (!silent) {
       const successMessage = clipboardSuccess
@@ -358,6 +367,13 @@ export default function ReviewForm({
         variant: clipboardSuccess ? "default" : "destructive",
         duration: 3000,
       });
+    }
+
+    // Reset success state after 2 seconds
+    if (clipboardSuccess) {
+      setTimeout(() => {
+        setCopySuccess(false);
+      }, 2000);
     }
 
     return clipboardSuccess;
@@ -715,10 +731,29 @@ export default function ReviewForm({
               <div className="grid grid-cols-1 gap-3">
                 <Button
                   onClick={() => handleCopyToClipboard(false)}
-                  className="w-full"
-                  disabled={!reviewText.trim()}
+                  className={`w-full transition-all duration-200 ${
+                    copySuccess
+                      ? "bg-green-600 hover:bg-green-700 text-white"
+                      : ""
+                  }`}
+                  disabled={!reviewText.trim() || isCopying}
                 >
-                  Copy Review to Clipboard
+                  {isCopying ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Copying...
+                    </>
+                  ) : copySuccess ? (
+                    <>
+                      <Check className="w-4 h-4 mr-2" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4 mr-2" />
+                      Copy Review to Clipboard
+                    </>
+                  )}
                 </Button>
 
                 <Button
